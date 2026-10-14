@@ -1,39 +1,21 @@
-# Gate Service: a reusable approval gateway
+# Gate Service：可复用的审批网关
 
 ## Problem
 
-PGH regression tasks, AI agents, and human workflows need approval, but
-embedding approval rules and identity resolution in each caller creates
-duplicated policy and inconsistent audit trails. Callers also need a dependable
-way to verify past decisions without making every check depend on the live Gate
-service.
+PGH 回归任务、AI 代理和人工工作流都需要审批，但由各调用方自行实现审批规则和身份解析，会造成策略重复、审计记录不一致。调用方还需要可靠地验证历史决策，而不应让每次验证都依赖在线的 Gate 服务。
 
 ## Outcome
 
-A reusable service accepts approval requests, applies a consistent identity- and
-template-based policy, and produces a signed decision credential that callers
-can verify against the exact business payload. Approval history remains
-attributable and auditable across service outages and future reviews.
+通过一个可复用的服务接收审批请求、统一执行基于身份和模板的策略，并生成签名决策凭证，供调用方针对确切的业务载荷进行验证。即使服务发生故障或进入后续审查，审批历史仍可追溯、可审计。
 
 ## Boundaries
 
-- Keep approval policy and identity authorization inside Gate; callers integrate
-  request creation, blocking, and resumption without reimplementing those rules.
-- Distinguish authenticated actors from delegated permission scopes: an Identity
-  operates under an explicitly granted, bounded Delegate; creation lineage alone
-  grants no permission.
-- The implementation repository is `shazhou-ww/silvermoon-gate`, derived from
-  the Cloudflare full-stack preset; the intended Worker hostname is
-  `gate.silvermoon.work`. Account ownership and production deployment remain
-  subject to setup and verification.
+- 审批策略和身份授权由 Gate 负责；调用方只需集成请求创建、等待审批和恢复流程，无需重复实现这些规则。
+- 区分已认证的实际操作者与被委托的权限范围：Identity（身份）必须依据明确授予且受限的 Delegate（委托权限）行事；仅有创建关系或来源链路并不代表获得权限。
+- 实现仓库为 `shazhou-ww/silvermoon-gate`，源自 Cloudflare 全栈预设；目标 Worker 主机名为 `gate.silvermoon.work`。Cloudflare 账户归属和生产部署仍需后续配置与验证。
 
 ## Acceptance criteria
 
-- A caller can create and track an approval request under a reusable, versioned
-  template, and one eligible approver's first decision becomes the immutable
-  outcome.
-- A signed credential binds the decision to the request, the exact payload
-  digest, the approval authority, and the actual actor, and an independent
-  verifier can validate it offline against a stated trust-bundle snapshot.
-- The identity, delegation, request, and decision history supports audit of who
-  acted, under what authority, and what Gate asserted at the time.
+- 调用方可以依据可复用、带版本的模板创建并跟踪审批请求；首位符合条件的审批人所作出的决定成为不可变的最终结果。
+- 签名凭证将决策绑定到请求、确切的载荷摘要、审批权限和实际操作者；独立验证方可依据明确指定的信任包快照离线验证该凭证。
+- 身份、委托、请求和决策历史能够支持审计，查明谁在何种权限下采取了行动，以及 Gate 当时作出了何种断言。

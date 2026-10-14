@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{REVIEW_TITLE}}</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas: #f4f5f6;
+      --surface: #ffffff;
+      --ink: #1b1d1f;
+      --muted: #62686e;
+      --border: #d8dcdf;
+      --accent: #176b62;
+      --accent-soft: #e8f3f1;
+      --warning: #8a5a08;
+    }
+
+    * { box-sizing: border-box; }
+    html { min-width: 320px; background: var(--canvas); }
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(rgba(27, 29, 31, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(27, 29, 31, 0.025) 1px, transparent 1px),
+        var(--canvas);
+      background-size: 28px 28px;
+      font-family: "Aptos", "Segoe UI Variable Text", "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      letter-spacing: 0;
+    }
+
+    a, button { font: inherit; }
+    a:focus-visible, button:focus-visible, iframe:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--accent) 28%, transparent);
+      outline-offset: 2px;
+    }
+
+    .skip-link {
+      position: fixed;
+      top: 8px;
+      left: 8px;
+      z-index: 10;
+      padding: 8px 12px;
+      color: #fff;
+      background: var(--ink);
+      border-radius: 6px;
+      transform: translateY(-150%);
+    }
+    .skip-link:focus { transform: translateY(0); }
+
+    header, main, footer {
+      width: min(1480px, calc(100% - 40px));
+      margin-inline: auto;
+    }
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 24px;
+      align-items: start;
+      padding: 28px 0 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    h1 { margin: 0; font-size: 27px; line-height: 1.2; }
+    header p { max-width: 72ch; margin: 6px 0 0; color: var(--muted); }
+    .status { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); white-space: nowrap; }
+    .status::before { width: 8px; height: 8px; background: var(--warning); border-radius: 50%; content: ""; }
+
+    main { padding: 20px 0 40px; }
+    .decision {
+      display: grid;
+      grid-template-columns: minmax(240px, 0.85fr) minmax(0, 1.15fr);
+      gap: 24px;
+      align-items: center;
+      padding: 16px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .eyebrow { margin: 0 0 4px; color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    h2 { margin: 0; font-size: 18px; line-height: 1.35; }
+    .deltas { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; margin: 0; padding: 0; list-style: none; }
+    .deltas li { padding: 5px 8px; color: #125d55; background: var(--accent-soft); border-radius: 5px; font-size: 12px; font-weight: 650; }
+
+    .scenarios { margin-top: 18px; }
+    .tabs { display: flex; gap: 4px; overflow-x: auto; padding: 3px; background: #e8eaec; border: 1px solid var(--border); border-radius: 7px; }
+    .tab {
+      min-height: 36px;
+      flex: 0 0 auto;
+      padding: 7px 12px;
+      color: var(--muted);
+      border-radius: 5px;
+      font-weight: 650;
+      text-decoration: none;
+    }
+    .tab[aria-selected="true"] { color: var(--ink); background: var(--surface); box-shadow: 0 1px 3px rgba(27, 29, 31, 0.12); }
+    .frame-shell { margin-top: 12px; overflow: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+    iframe { display: block; width: 100%; min-height: 720px; border: 0; }
+
+    .review-end { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px; align-items: center; margin-top: 18px; }
+    .review-end p { margin: 0; color: var(--muted); }
+    .review-end strong { color: var(--ink); }
+    .source { color: var(--accent); }
+    footer { padding-bottom: 28px; color: var(--muted); font-size: 12px; }
+
+    @media (max-width: 720px) {
+      header, main, footer { width: min(100% - 24px, 1480px); }
+      header, .decision, .review-end { grid-template-columns: 1fr; }
+      .status { white-space: normal; }
+      .deltas { justify-content: flex-start; }
+      .tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr)); overflow: visible; }
+      .tab { min-width: 0; overflow-wrap: anywhere; text-align: center; }
+      iframe { min-height: 900px; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#review">Skip to review</a>
+  <header>
+    <div>
+      <h1>{{REVIEW_TITLE}}</h1>
+      <p>{{REVIEW_SUMMARY}}</p>
+    </div>
+    <span class="status">Illustrative review aid</span>
+  </header>
+
+  <main id="review">
+    <section class="decision" aria-labelledby="decision-title">
+      <div>
+        <p class="eyebrow">Decision requested</p>
+        <h2 id="decision-title">{{DECISION}}</h2>
+      </div>
+      <ul class="deltas" aria-label="Material changes">
+        <li>{{MATERIAL_DELTA_1}}</li>
+        <li>{{MATERIAL_DELTA_2}}</li>
+      </ul>
+    </section>
+
+    <section class="scenarios" aria-label="Review scenarios">
+      <nav class="tabs" role="tablist" aria-label="Choose a scenario">
+        <a class="tab" id="tab-primary" role="tab" aria-selected="true" href="scenarios/01-primary-flow.html" target="scenario-frame">{{SCENARIO_1_LABEL}}</a>
+        <a class="tab" id="tab-secondary" role="tab" aria-selected="false" href="scenarios/02-secondary-state.html" target="scenario-frame">{{SCENARIO_2_LABEL}}</a>
+        <!-- Add or remove scenario links as needed. Keep one HTML file per link. -->
+      </nav>
+      <div class="frame-shell">
+        <iframe id="scenario-frame" name="scenario-frame" src="scenarios/01-primary-flow.html" title="{{SCENARIO_1_LABEL}} comparison"></iframe>
+      </div>
+    </section>
+
+    <section class="review-end" aria-label="Review conclusion">
+      <p>This artifact is illustrative, not production UI or a normative behavior contract. <a class="source" href="{{NORMATIVE_SOURCE_URL}}">Normative source</a></p>
+      <strong>{{APPROVAL_QUESTION}}</strong>
+    </section>
+  </main>
+
+  <footer>{{UNRESOLVED_RISKS_OR_NONE}}</footer>
+
+  <script>
+    const frame = document.querySelector("#scenario-frame");
+    const tabs = [...document.querySelectorAll(".tab")];
+
+    function selectTab(tab) {
+      tabs.forEach((candidate) => candidate.setAttribute("aria-selected", String(candidate === tab)));
+      frame.title = `${tab.textContent.trim()} comparison`;
+    }
+
+    tabs.forEach((tab, index) => {
+      tab.addEventListener("click", () => selectTab(tab));
+      tab.addEventListener("keydown", (event) => {
+        let nextIndex = null;
+        if (event.key === "ArrowRight") nextIndex = (index + 1) % tabs.length;
+        if (event.key === "ArrowLeft") nextIndex = (index - 1 + tabs.length) % tabs.length;
+        if (event.key === "Home") nextIndex = 0;
+        if (event.key === "End") nextIndex = tabs.length - 1;
+        if (nextIndex === null) return;
+        event.preventDefault();
+        tabs[nextIndex].click();
+        tabs[nextIndex].focus();
+      });
+    });
+
+    window.addEventListener("message", (event) => {
+      if (event.source !== frame.contentWindow || event.data?.type !== "ui-review:height") return;
+      frame.style.height = `${Math.max(320, Number(event.data.height) || 0)}px`;
+    });
+  </script>
+</body>
+</html>

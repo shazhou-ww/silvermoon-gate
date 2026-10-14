@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "business-data-model-review": {
+      "source": "shazhou-ww/skills",
+      "sourceType": "github",
+      "skillPath": "skills/business-data-model-review/SKILL.md",
+      "computedHash": "67edcc194ca828a0bafb93937a53e456b86be25b4ca7aedaa153658842847b01"
+    },
+    "ui-change-review": {
+      "source": "shazhou-ww/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ui-change-review/SKILL.md",
+      "computedHash": "72a4c29df644fd3d2bfc259073b69ffb957c750bfe40d6976af3905cb9e1c31a"
+    }
+  }
+}

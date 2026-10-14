@@ -1,69 +1,32 @@
-# Gate Service design boundaries
+# Gate Service 设计边界
 
-These are the current direction established during idea shaping, not a final
-protocol or implementation specification.
+以下内容是构思阶段确定的当前方向，并非最终协议或实现规范。
 
 ## Identity and delegated authority
 
-- Identity represents an authenticated human or Agent/workload. Gate manages
-  authentication; human MFA is selected per template, while Agents use
-  short-lived access tokens tied to their own Identity.
-- Creation lineage records responsibility, not permission. Creating an Agent or
-  another Identity never implicitly inherits authority.
-- Delegate is a separate, non-login permission-scope entity. Its scope is
-  immutable; changing scope means creating a new Delegate. Its owner may define
-  only a subset of authority they already hold and are allowed to delegate.
-- Grant assigns a Delegate to a specific Identity for a validity period. The
-  owner issues or revokes Grants; delegation onward is disabled unless
-  explicitly permitted, and any downstream scope and validity must fit within
-  the upstream Grant.
-- Approval evidence distinguishes the Identity whose authority is evaluated from
-  the actual authenticated actor. A delegated action binds both identities and
-  the applicable Delegate and Grant. Disabling a Delegate prevents future use
-  but does not rewrite past credentials.
+- Identity（身份）代表经过认证的人类用户或 Agent/工作负载。认证由 Gate 管理；人类用户是否使用 MFA 按模板决定，Agent 则使用绑定到自身 Identity 的短期访问令牌。
+- 创建来源链路记录的是责任归属，而非权限。创建 Agent 或其他 Identity 不会使其自动继承权限。
+- Delegate（委托权限范围）是独立的、不可用于登录的权限范围实体。其范围不可变；需要改变范围时应创建新的 Delegate。其所有者只能定义自己已拥有且获准委托的权限子集。
+- Grant（授权）在一个有效期内，将 Delegate 分配给特定 Identity。所有者可以签发或撤销 Grant；除非明确允许，否则不得继续向下委托。任何下游范围和有效期都必须包含在上游 Grant 的范围和有效期之内。
+- 审批凭据应区分被评估权限的 Identity 与实际通过认证的操作者。委托操作同时绑定这两个身份以及适用的 Delegate 和 Grant。停用 Delegate 会阻止其今后被使用，但不会改写过去签发的凭证。
 
 ## Requests and approval behavior
 
-- GateTemplate is versioned, and a request pins its template version. Eligible
-  approvers are dynamically resolved when a decision is submitted.
-- The first eligible approver to atomically submit either an approval or
-  rejection determines the terminal result. Concurrent later decisions cannot
-  overwrite it.
-- Gate has no approval timeout. The requester may withdraw only a pending
-  request; rejection or withdrawal followed by a retry creates a new request.
-- Creation is idempotent per requester and key; reuse with different request
-  content is a conflict. Payload is an immutable JSON snapshot after creation.
-- GateURI is only a locator, never an access capability. A caller-defined Thread
-  can group request history, but Thread ownership/ACL does not replace
-  per-request authorization.
+- GateTemplate（Gate 模板）带有版本；每个请求固定使用创建时指定的模板版本。提交决策时动态解析符合条件的审批人。
+- 首位符合条件并以原子方式提交批准或拒绝的审批人决定最终结果。之后并发提交的决策不得覆盖该结果。
+- Gate 不设置审批超时。请求方只能撤回仍处于待处理状态的请求；被拒绝或撤回后重试时必须创建新请求。
+- 请求创建按请求方和幂等键保证幂等；若用同一键提交不同请求内容，则视为冲突。请求创建后，载荷是不可变的 JSON 快照。
+- GateURI 仅用于定位请求，不是访问凭证。调用方定义的 Thread（线程）可以归组请求历史，但 Thread 的所有权或 ACL 不能取代对每个请求单独进行的授权检查。
 
 ## Payload, credentials, and trust
 
-- Gate stores the complete payload for long-term audit. Payload is canonicalized
-  using RFC 8785 JCS and hashed with SHA-256, with its schema version bound into
-  the digest claim.
-- A standard signed credential binds the request, pinned template, decision,
-  payload digest, approval authority, actual actor, and Gate's assertion that
-  identity and authorization checks passed at decision time.
-- Offline release requires both valid signature verification and a match against
-  the caller's expected payload digest. Offline verification trusts Gate's
-  authorization assertion; it does not independently replay the identity graph.
-- Credentials remain immutable historical records. If a signing key is confirmed
-  compromised, every credential for that `keyId` is treated as untrusted. An
-  offline verifier only knows the key-status snapshot it possesses; its result
-  must identify that snapshot.
+- Gate 长期保存完整载荷以供审计。载荷使用 RFC 8785 JCS 规范化并以 SHA-256 计算摘要，摘要声明同时绑定其 schema 版本。
+- 标准签名凭证绑定请求、固定的模板版本、决策、载荷摘要、审批权限、实际操作者，以及 Gate 对决策时身份和授权检查均已通过的断言。
+- 离线放行必须同时满足签名有效，并且载荷摘要与调用方预期值匹配。离线验证信任 Gate 的授权断言，不会自行重放身份关系图。
+- 凭证作为不可变历史记录保存。如果确认某个签名密钥已泄露，则该 `keyId` 签发的所有凭证都视为不可信。离线验证方只能依据自己持有的密钥状态快照作出判断；验证结果必须注明所依据的快照。
 
 ## Audit and operational boundaries
 
-- Current relationship state and its append-only audit event are committed
-  atomically in the same database. Database immutability controls, access
-  separation, backup, and audit reduce tampering risk; no external cryptographic
-  log anchor is assumed.
-- Identity retirement means disable and seal, retaining non-reusable identifiers
-  and history rather than deleting historical evidence.
-- The service repository is `shazhou-ww/silvermoon-gate`, derived from
-  `shazhou-ww/preset-cloudflare-fullstack`; the intended hosting platform is
-  Cloudflare Workers and the configured hostname is `gate.silvermoon.work`.
-  Cloudflare account ownership, zone eligibility, deployment access, and
-  operational key custody remain to be verified. No DNS changes or deployment
-  have been performed.
+- 当前关系状态及其只追加的审计事件必须在同一数据库事务中原子提交。数据库不可变性控制、访问权限分离、备份和审计可降低篡改风险；本设计不假定存在外部加密日志锚点。
+- Identity 退役意味着停用并封存；保留不可复用的标识符和历史记录，而不是删除历史凭据。
+- 服务仓库为 `shazhou-ww/silvermoon-gate`，源自 `shazhou-ww/preset-cloudflare-fullstack`；目标托管平台为 Cloudflare Workers，配置的主机名为 `gate.silvermoon.work`。Cloudflare 账户归属、Zone 资格、部署访问权限和运维密钥保管仍待验证。目前尚未进行 DNS 更改或服务部署。
