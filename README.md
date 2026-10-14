@@ -1,11 +1,13 @@
 # Silvermoon Gate
 
-Silvermoon Gate is a reusable approval gateway. This repository is its initial
-Cloudflare foundation: a React interface, a Hono Worker, same-origin static
-assets, and inherited Auth.js sign-in scaffolding. The shared contracts package
-now provides canonical payload digests, request idempotency fingerprints, and
-request lifecycle transitions. Persistent approval workflows, authorization, and
-credential issuance are still under implementation.
+Silvermoon Gate is a reusable approval gateway. MVP 1 implements a restricted
+human online approval workflow: GitHub sign-in, stable Gate identities, explicit
+direct permissions, immutable requests, and a single approval/rejection or
+requester withdrawal with atomic D1 audit history. The Chinese React interface
+includes request creation, personal requests, an approval inbox, and details.
+This is not an Agent, delegation, MFA, signed-credential, or
+offline-verification release. It is intended for non-sensitive test-environment
+pilot requests only.
 
 The planned production hostname is
 [`https://gate.silvermoon.work`](https://gate.silvermoon.work). Wrangler is
@@ -68,8 +70,9 @@ keeps OAuth callbacks and session cookies on `localhost:5173`.
 
 ## Identity providers
 
-At least one provider needs credentials. Providers without both an ID and secret
-are omitted from the interface rather than exposed as broken actions.
+MVP 1 enables GitHub only. Missing GitHub credentials do not expose a broken
+sign-in action. A successful OAuth login alone does not grant approval rights:
+the verified GitHub subject must map to an enabled, provisioned Gate identity.
 
 ### GitHub
 
@@ -82,31 +85,6 @@ http://localhost:5173/api/auth/callback/github
 ```
 
 Set `AUTH_GITHUB_ID` and `AUTH_GITHUB_SECRET`.
-
-### Google
-
-Create an OAuth 2.0 Web application with:
-
-```text
-Authorized JavaScript origin: http://localhost:5173
-Authorized redirect URI:
-http://localhost:5173/api/auth/callback/google
-```
-
-Set `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`.
-
-### Microsoft Entra ID
-
-Create a Web platform redirect URI:
-
-```text
-http://localhost:5173/api/auth/callback/microsoft-entra-id
-```
-
-Set `AUTH_MICROSOFT_ENTRA_ID_ID`, `AUTH_MICROSOFT_ENTRA_ID_SECRET`, and
-optionally `AUTH_MICROSOFT_ENTRA_ID_ISSUER`. The example issuer accepts accounts
-from any Entra tenant. Replace `common` with a tenant ID for a single-tenant
-app.
 
 Use the production origin in every provider console before deployment.
 
@@ -121,8 +99,8 @@ pnpm --filter @workspace/worker exec wrangler secret put AUTH_GITHUB_ID
 pnpm --filter @workspace/worker exec wrangler secret put AUTH_GITHUB_SECRET
 ```
 
-Repeat the last two commands for Google or Microsoft variables. `AUTH_URL` must
-be the full production auth base, for example:
+`AUTH_URL` must be the full auth base for the selected pilot environment, for
+example:
 
 ```text
 https://example.com/api/auth
@@ -130,7 +108,7 @@ https://example.com/api/auth
 
 Never commit `.dev.vars`; only `.dev.vars.example` belongs in Git.
 
-## Gate database and template administration
+## Gate database and restricted pilot setup
 
 Create a D1 database for the Worker and replace the local placeholder
 `database_id` in `apps/worker/wrangler.jsonc` with the ID returned by Wrangler:
@@ -140,16 +118,60 @@ pnpm --filter @workspace/worker exec wrangler d1 create silvermoon-gate
 pnpm --filter @workspace/worker exec wrangler d1 migrations apply silvermoon-gate --local
 ```
 
-The same migration can be applied remotely only when the Cloudflare account and
-database are ready for deployment. Set `GATE_ADMIN_IDENTITY_IDS` in Wrangler
-configuration to a comma-separated allowlist of Auth.js identity IDs. An
-allowlisted administrator creates a new versioned template with
-`POST /api/templates`, including its payload schema version and initial
-approvers; the same administrator can replace the eligible approver roster for a
-specific version with `PUT /api/templates/:id/:version/approvers`. Request
-creation, request reads, decisions, and withdrawal require an authenticated
-session. Writes also require a same-origin `Origin` header. Request payloads are
-limited to 64 KiB.
+Remote migration, database creation and deployment require explicit environment
+authorization; none is performed by running tests or a dry-run build. Provision
+Gate identities and template permissions through reviewed SQL, not through
+browser administrator endpoints or an environment-variable bypass. Use distinct,
+independently verified GitHub subjects for requester and approver. Display names
+and email addresses are never authorization keys. Self-approval is prohibited
+even when one identity holds both permissions.
+
+The MVP schema and pilot provisioning procedure are documented in the Worker
+migrations and
+[MVP 1 implementation evidence](.silvermoon/ideas/01M4XC32C5CB66DH8RFWPCAEF1/outer/inner/Verification.md).
+Keep legacy history intact; do not invent identity mappings for historical
+records or edit accepted requests during provisioning.
+
+Apply both `0001_gate.sql` and `0002_human_mvp.sql` locally before signing in.
+The latter provisions the fixed test template but deliberately does **not**
+create enabled identities or grant permissions. After independently verifying
+the two GitHub account subjects, execute reviewed SQL in the selected local
+database, replacing the placeholders below:
+
+```sql
+INSERT INTO gate_identities VALUES
+  ('human-requester', 'VERIFIED_GITHUB_SUBJECT_REQUESTER', 'Requester', 'active', 1, 1),
+  ('human-approver', 'VERIFIED_GITHUB_SUBJECT_APPROVER', 'Approver', 'active', 1, 1);
+INSERT INTO gate_template_access VALUES
+  ('human-requester', 'release-review', 1, 'create', 1),
+  ('human-approver', 'release-review', 1, 'decide', 1);
+```
+
+The explicit Gate IDs must never be reassigned. Configuration changes require
+increasing revisions and generate configuration audit records. Do not use a
+GitHub display name or email as its provider subject. For an existing pilot,
+inspect the current records before applying an update; never replay inserts or
+delete history to bypass a uniqueness/revision conflict.
+
+The fixed `release-review` version 1 template only accepts
+`environment: "test"`. Payload fields are `action: "release"`, `candidate`,
+`artifactDigest` (`sha256:` plus 64 lowercase hexadecimal characters),
+`environment`, and `summary`. The API body limit is 16 KiB. Unknown fields and
+invalid business payloads are rejected. The artifact digest is a business field,
+distinct from the Gate digest of the complete immutable payload plus schema
+version.
+
+GitHub-backed Gate sessions are revocable and validated against D1. Request
+creation, lists, details, decisions and withdrawal enforce current identity and
+direct template permissions. Cookie-authenticated writes additionally require a
+same-origin `Origin` header. Lists authorize before pagination; request links
+and cursors do not grant access.
+
+The inbox excludes self-created requests. Only a pending request may be decided
+or withdrawn. A per-operation marker gates the matching decision/audit writes,
+so a losing concurrent submission cannot create evidence for another operation.
+The conditional state change and evidence run in one D1 batch and roll back
+together on failure.
 
 The current implementation records approval state and audit events but does not
 yet issue signed decision credentials. An `approved` response is not an
@@ -181,14 +203,18 @@ target account.
 
 ## Current boundaries
 
-- The existing sign-in flow and interface are inherited scaffolding, not the
-  final Gate identity or delegation model.
+- MVP 1 implements direct human authorization only, not the final delegated
+  authority model. Do not use it for production release controls or workflows
+  that require MFA or offline verification.
 - The service design and implementation plan are tracked in the repository's
   Silvermoon idea record.
 - Configure production OAuth callback URLs and secrets only when the chosen
   authentication design and deployment environment are ready.
 - Enable the deployment workflow only after its Cloudflare environment is
   configured and reviewed.
+- Local tests and local workerd/D1 emulation do not prove cloud D1 queueing,
+  overload recovery, or real provider sign-in. The pilot still requires two real
+  identities and an explicitly authorized cloud environment.
 
 ## License
 

@@ -4,8 +4,8 @@
 
 ### Implementation steps
 
-- [ ] **I-S01:** 实现直接身份与请求事实
-- [ ] **I-S02:** 实现最小审批界面
+- [x] **I-S01:** 实现直接身份与请求事实
+- [x] **I-S02:** 实现最小审批界面
 - [ ] **I-S03:** 验证在线安全闭环
 
 ### Implementation acceptance criteria

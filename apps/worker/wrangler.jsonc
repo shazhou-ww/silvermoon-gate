@@ -18,7 +18,6 @@
   ],
   "vars": {
     "APP_NAME": "Silvermoon Gate",
-    "GATE_ADMIN_IDENTITY_IDS": "",
   },
   "d1_databases": [
     {
@@ -30,5 +29,8 @@
   ],
   "observability": {
     "enabled": true,
+    "traces": {
+      "enabled": true,
+    },
   },
 }

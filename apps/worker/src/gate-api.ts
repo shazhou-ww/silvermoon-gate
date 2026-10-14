@@ -1,340 +1,344 @@
-import type { GateJsonValue } from "@workspace/contracts";
 import { Hono } from "hono";
 import type { Context } from "hono";
-import { HTTPException } from "hono/http-exception";
-
+import type {
+  CreateGateRequest,
+  GateRequestStatus,
+} from "@workspace/contracts";
 import type { Bindings } from "./env.js";
 import {
   createRequest,
-  createTemplate,
   GateStoreError,
+  getIdentity,
   getRequest,
   getTemplates,
-  replaceTemplateApprovers,
+  listRequests,
+  releaseSchema,
   transitionRequest,
+  type Principal,
+  type ListFilter,
 } from "./gate-store.js";
+type IdentityResolver = (
+  context: Context<{ Bindings: Bindings }>,
+) => Promise<Principal>;
 
-type IdentityResolver = (context: Context<{ Bindings: Bindings }>) => string;
-
-const maxRequestBodyBytes = 64 * 1024;
-
+export function errorResponse(
+  error: Error,
+  context: Context<{ Bindings: Bindings }>,
+) {
+  const traceId = crypto.randomUUID();
+  const known = error instanceof GateStoreError;
+  if (!known)
+    console.error(
+      JSON.stringify({
+        traceId,
+        code: "INTERNAL_ERROR",
+        path: context.req.path,
+      }),
+    );
+  return context.json(
+    {
+      error: {
+        code: known ? error.code : "INTERNAL_ERROR",
+        message: known ? error.message : "Internal server error.",
+        traceId,
+        ...(known && error.fieldErrors
+          ? { fieldErrors: error.fieldErrors }
+          : {}),
+      },
+    },
+    known ? error.status : 500,
+  );
+}
 export function createGateApi(resolveIdentity: IdentityResolver) {
   const api = new Hono<{ Bindings: Bindings }>();
-
-  api.use("*", async (context, next) => {
-    context.header("Cache-Control", "no-store");
+  api.use("*", async (c, next) => {
+    c.header("Cache-Control", "no-store");
     await next();
   });
-
-  api.get("/templates", async (context) => {
-    const templates = await getTemplates(context.env.GATE_DB);
-    return context.json({ templates });
-  });
-
-  api.post("/templates", async (context) => {
-    requireSameOrigin(context.req.raw);
-    const identityId = resolveIdentity(context);
-    const administrators = parseAdministratorIds(
-      context.env.GATE_ADMIN_IDENTITY_IDS,
-    );
-    if (!administrators.includes(identityId)) {
-      throw new GateStoreError(
-        403,
-        "Identity is not allowed to manage templates.",
-      );
-    }
-
-    const body = await readJsonBody(context.req.raw, 16 * 1024);
-    const record = requireObject(body, [
-      "id",
-      "title",
-      "description",
-      "payloadSchemaVersion",
-      "approverIdentityIds",
-    ]);
+  api.get("/me", async (c) =>
+    c.json(await getIdentity(c.env.GATE_DB, await resolveIdentity(c))),
+  );
+  api.get("/templates", async (c) =>
+    c.json({
+      templates: await getTemplates(c.env.GATE_DB, await resolveIdentity(c)),
+    }),
+  );
+  api.get("/templates/:id/:version/schema", async (c) => {
+    await resolveIdentity(c);
     if (
-      typeof record.id !== "string" ||
-      typeof record.title !== "string" ||
-      !isPositiveInteger(record.payloadSchemaVersion) ||
-      !Array.isArray(record.approverIdentityIds) ||
-      !record.approverIdentityIds.every((id) => typeof id === "string") ||
-      (record.description !== undefined &&
-        typeof record.description !== "string")
-    ) {
-      throw new GateStoreError(400, "Template request fields are invalid.");
-    }
-
-    const template = await createTemplate(context.env.GATE_DB, identityId, {
-      id: record.id,
-      title: record.title,
-      payloadSchemaVersion: record.payloadSchemaVersion,
-      approverIdentityIds: record.approverIdentityIds,
-      ...(typeof record.description === "string"
-        ? { description: record.description }
-        : {}),
+      c.req.param("id") !== "release-review" ||
+      c.req.param("version") !== "1"
+    )
+      throw new GateStoreError(404, "Template not available.");
+    return c.json({
+      templateId: "release-review",
+      templateVersion: 1,
+      payloadSchemaVersion: 1,
+      schema: releaseSchema,
     });
-    return context.json({ template }, 201);
   });
-
-  api.put("/templates/:id/:version/approvers", async (context) => {
-    requireSameOrigin(context.req.raw);
-    const identityId = resolveIdentity(context);
-    const administrators = parseAdministratorIds(
-      context.env.GATE_ADMIN_IDENTITY_IDS,
-    );
-    if (!administrators.includes(identityId)) {
-      throw new GateStoreError(
-        403,
-        "Identity is not allowed to manage templates.",
-      );
-    }
-
-    const version = Number(context.req.param("version"));
-    if (!isPositiveInteger(version)) {
-      throw new GateStoreError(
-        400,
-        "Template version must be a positive integer.",
-      );
-    }
-    const body = await readJsonBody(context.req.raw, 16 * 1024);
-    const record = requireObject(body, ["approverIdentityIds"]);
+  api.get("/requests", async (c) => {
+    const actor = await resolveIdentity(c);
+    const view = c.req.query("view") ?? "mine";
+    const status = c.req.query("status") ?? null;
+    const limitText = c.req.query("limit") ?? "20";
+    const limit = Number(limitText);
     if (
-      !Array.isArray(record.approverIdentityIds) ||
-      !record.approverIdentityIds.every((id) => typeof id === "string")
-    ) {
-      throw new GateStoreError(400, "Approver identity IDs are required.");
-    }
-
-    await replaceTemplateApprovers(
-      context.env.GATE_DB,
-      context.req.param("id"),
-      version,
-      identityId,
-      record.approverIdentityIds,
-    );
-    return context.json({ updated: true });
+      (view !== "mine" && view !== "inbox") ||
+      (status !== null &&
+        !["pending", "approved", "rejected", "withdrawn"].includes(status)) ||
+      !/^[0-9]+$/.test(limitText) ||
+      !Number.isInteger(limit) ||
+      limit < 1 ||
+      limit > 100 ||
+      (view === "inbox" && status && status !== "pending")
+    )
+      throw new GateStoreError(400, "Invalid list filters.");
+    const filter: ListFilter = {
+      view,
+      status: status as GateRequestStatus | null,
+      limit,
+    };
+    const cursor = c.req.query("cursor");
+    if (cursor)
+      filter.after = await decodeCursor(
+        cursor,
+        actor,
+        filter,
+        c.env.AUTH_SECRET,
+      );
+    const result = await listRequests(c.env.GATE_DB, actor, filter);
+    return c.json({
+      items: result.items.map((request) => ({
+        id: request.id,
+        status: request.status,
+        requesterIdentityId: request.requesterIdentityId,
+        templateId: request.templateId,
+        templateVersion: request.templateVersion,
+        payloadSchemaVersion: request.payloadSchemaVersion,
+        candidate:
+          typeof request.payload === "object" &&
+          request.payload !== null &&
+          !Array.isArray(request.payload)
+            ? ((request.payload as Readonly<Record<string, unknown>>)
+                .candidate ?? "")
+            : "",
+        createdAt: request.createdAt,
+      })),
+      nextCursor: result.after
+        ? await encodeCursor(
+            { identityId: actor.identityId, view, status, ...result.after },
+            c.env.AUTH_SECRET,
+          )
+        : null,
+    });
   });
-
-  api.post("/requests", async (context) => {
-    requireSameOrigin(context.req.raw);
-    const identityId = resolveIdentity(context);
-    const idempotencyKey = context.req.header("Idempotency-Key");
-    if (!idempotencyKey) {
-      throw new GateStoreError(400, "Idempotency-Key header is required.");
-    }
-
-    const body = await readJsonBody(context.req.raw, maxRequestBodyBytes);
-    const record = requireObject(body, [
+  api.post("/requests", async (c) => {
+    requireSameOrigin(c.req.raw);
+    const actor = await resolveIdentity(c);
+    const key = c.req.header("Idempotency-Key");
+    if (!key) throw new GateStoreError(400, "Idempotency-Key is required.");
+    const body = requireObject(await readJsonBody(c.req.raw, 16 * 1024), [
       "templateId",
       "templateVersion",
       "payloadSchemaVersion",
       "payload",
       "threadId",
     ]);
-    if (
-      typeof record.templateId !== "string" ||
-      !isPositiveInteger(record.templateVersion) ||
-      !isPositiveInteger(record.payloadSchemaVersion) ||
-      !isJsonObject(record.payload) ||
-      !isGateJsonValue(record.payload) ||
-      (record.threadId !== undefined && typeof record.threadId !== "string")
-    ) {
-      throw new GateStoreError(400, "Request fields are invalid.");
-    }
-
     const result = await createRequest(
-      context.env.GATE_DB,
-      identityId,
-      idempotencyKey,
-      {
-        templateId: record.templateId,
-        templateVersion: record.templateVersion,
-        payloadSchemaVersion: record.payloadSchemaVersion,
-        payload: record.payload,
-        ...(typeof record.threadId === "string"
-          ? { threadId: record.threadId }
-          : {}),
-      },
+      c.env.GATE_DB,
+      actor,
+      key,
+      body as unknown as Omit<
+        CreateGateRequest,
+        "requesterIdentityId" | "idempotencyKey"
+      >,
     );
-    return context.json(
-      { request: result.request },
+    return c.json(
+      { request: result.request, replayed: !result.created },
       result.created ? 201 : 200,
     );
   });
-
-  api.get("/requests/:id", async (context) => {
-    const identityId = resolveIdentity(context);
-    const request = await getRequest(
-      context.env.GATE_DB,
-      context.req.param("id"),
-      identityId,
-    );
-    if (!request) {
-      throw new GateStoreError(404, "Request not found.");
-    }
-    return context.json({ request });
-  });
-
-  api.post("/requests/:id/decision", async (context) => {
-    requireSameOrigin(context.req.raw);
-    const identityId = resolveIdentity(context);
-    const body = await readJsonBody(context.req.raw, 1024);
-    const record = requireObject(body, ["decision"]);
-    if (record.decision !== "approve" && record.decision !== "reject") {
+  api.get("/requests/:id", async (c) =>
+    c.json({
+      request: await getRequest(
+        c.env.GATE_DB,
+        c.req.param("id"),
+        await resolveIdentity(c),
+      ),
+    }),
+  );
+  api.post("/requests/:id/decision", async (c) => {
+    requireSameOrigin(c.req.raw);
+    const actor = await resolveIdentity(c);
+    const body = requireObject(await readJsonBody(c.req.raw, 1024), [
+      "decision",
+    ]);
+    if (body.decision !== "approve" && body.decision !== "reject")
       throw new GateStoreError(400, "Decision must be approve or reject.");
-    }
-
-    const request = await transitionRequest(
-      context.env.GATE_DB,
-      context.req.param("id"),
-      identityId,
-      record.decision,
-    );
-    return context.json({ request });
+    return c.json({
+      request: await transitionRequest(
+        c.env.GATE_DB,
+        c.req.param("id"),
+        actor,
+        body.decision,
+      ),
+    });
   });
-
-  api.post("/requests/:id/withdraw", async (context) => {
-    requireSameOrigin(context.req.raw);
-    const identityId = resolveIdentity(context);
-    const request = await transitionRequest(
-      context.env.GATE_DB,
-      context.req.param("id"),
-      identityId,
-      "withdraw",
-    );
-    return context.json({ request });
+  api.post("/requests/:id/withdraw", async (c) => {
+    requireSameOrigin(c.req.raw);
+    const actor = await resolveIdentity(c);
+    requireObject(await readJsonBody(c.req.raw, 1024), []);
+    return c.json({
+      request: await transitionRequest(
+        c.env.GATE_DB,
+        c.req.param("id"),
+        actor,
+        "withdraw",
+      ),
+    });
   });
-
-  api.onError((error, context) => {
-    if (error instanceof GateStoreError) {
-      return context.json({ error: error.message }, error.status);
-    }
-    if (error instanceof HTTPException) {
-      const response = error.getResponse();
-      response.headers.set("Cache-Control", "no-store");
-      return response;
-    }
-
-    console.error("Gate API request failed.", error);
-    return context.json({ error: "Internal server error." }, 500);
-  });
-
+  api.notFound((c) =>
+    errorResponse(new GateStoreError(404, "API route not found."), c),
+  );
+  api.onError(errorResponse);
   return api;
 }
-
-function parseAdministratorIds(value: string | undefined): readonly string[] {
-  return (value ?? "")
-    .split(",")
-    .map((identityId) => identityId.trim())
-    .filter(Boolean);
+function requireObject(
+  value: unknown,
+  keys: readonly string[],
+): Record<string, unknown> {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value) ||
+    Object.keys(value).some((key) => !keys.includes(key))
+  )
+    throw new GateStoreError(400, "Unsupported JSON envelope.");
+  return value as Record<string, unknown>;
 }
-
-async function readJsonBody(
+export async function readJsonBody(
   request: Request,
   maxBytes: number,
 ): Promise<unknown> {
-  const contentType = request.headers
-    .get("content-type")
-    ?.split(";")[0]
-    ?.trim();
-  if (contentType !== "application/json") {
+  if (
+    request.headers.get("content-type")?.split(";")[0]?.trim() !==
+    "application/json"
+  )
     throw new GateStoreError(400, "Content-Type must be application/json.");
-  }
-
-  const contentLength = request.headers.get("content-length");
-  if (contentLength && Number(contentLength) > maxBytes) {
-    throw new GateStoreError(400, "Request body exceeds the size limit.");
-  }
-  if (!request.body) {
-    throw new GateStoreError(400, "Request body is required.");
-  }
-
-  const chunks: Uint8Array[] = [];
-  let totalBytes = 0;
+  if (Number(request.headers.get("content-length")) > maxBytes)
+    throw new GateStoreError(413, "Request body exceeds the size limit.");
+  if (!request.body) throw new GateStoreError(400, "JSON body required.");
   const reader = request.body.getReader();
-  let reading = true;
-  while (reading) {
+  const chunks: Uint8Array[] = [];
+  let length = 0;
+  for (;;) {
     const { done, value } = await reader.read();
-    if (done) {
-      reading = false;
-      continue;
-    }
-    totalBytes += value.byteLength;
-    if (totalBytes > maxBytes) {
+    if (done) break;
+    length += value.byteLength;
+    if (length > maxBytes) {
       await reader.cancel();
-      throw new GateStoreError(400, "Request body exceeds the size limit.");
+      throw new GateStoreError(413, "Request body exceeds the size limit.");
     }
     chunks.push(value);
   }
-
-  const bytes = new Uint8Array(totalBytes);
+  const bytes = new Uint8Array(length);
   let offset = 0;
   for (const chunk of chunks) {
     bytes.set(chunk, offset);
     offset += chunk.byteLength;
   }
-
   try {
-    const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
-    return JSON.parse(text) as unknown;
+    return JSON.parse(
+      new TextDecoder("utf-8", { fatal: true }).decode(bytes),
+    ) as unknown;
   } catch {
-    throw new GateStoreError(400, "Request body must be valid JSON.");
+    throw new GateStoreError(400, "Invalid JSON body.");
   }
 }
-
-function requireObject(
-  value: unknown,
-  allowedKeys: readonly string[],
-): Record<string, unknown> {
-  if (value === null || typeof value !== "object" || Array.isArray(value)) {
-    throw new GateStoreError(400, "Request body must be a JSON object.");
-  }
-  const record = value as Record<string, unknown>;
-  if (Object.keys(record).some((key) => !allowedKeys.includes(key))) {
-    throw new GateStoreError(400, "Request body contains unsupported fields.");
-  }
-  return record;
-}
-
-function isJsonObject(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
-}
-
-function isGateJsonValue(value: unknown): value is GateJsonValue {
+export function requireSameOrigin(request: Request) {
   if (
-    value === null ||
-    typeof value === "string" ||
-    typeof value === "boolean" ||
-    (typeof value === "number" && Number.isFinite(value))
-  ) {
-    return true;
-  }
-  if (Array.isArray(value)) {
-    return value.every(isGateJsonValue);
-  }
-  if (typeof value === "object") {
-    return Object.values(value).every(isGateJsonValue);
-  }
-  return false;
+    request.headers.get("origin") !== new URL(request.url).origin ||
+    request.headers.get("sec-fetch-site") === "cross-site"
+  )
+    throw new GateStoreError(403, "A same-origin request is required.");
 }
-
-function isPositiveInteger(value: unknown): value is number {
-  return typeof value === "number" && Number.isSafeInteger(value) && value > 0;
+interface CursorData {
+  identityId: string;
+  view: string;
+  status: string | null;
+  createdAt: string;
+  id: string;
 }
-
-function requireSameOrigin(request: Request): void {
-  const origin = request.headers.get("origin");
-  if (!origin) {
-    throw new GateStoreError(403, "Origin header is required for this action.");
-  }
+async function hmacKey(secret: string) {
+  return crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign", "verify"],
+  );
+}
+function base64(bytes: Uint8Array) {
+  return btoa(String.fromCharCode(...bytes))
+    .replaceAll("+", "-")
+    .replaceAll("/", "_")
+    .replaceAll("=", "");
+}
+function unbase64(text: string) {
+  return Uint8Array.from(
+    atob(text.replaceAll("-", "+").replaceAll("_", "/")),
+    (c) => c.charCodeAt(0),
+  );
+}
+async function encodeCursor(data: CursorData, secret: string) {
+  const payload = base64(new TextEncoder().encode(JSON.stringify(data)));
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    await hmacKey(secret),
+    new TextEncoder().encode(payload),
+  );
+  return `${payload}.${base64(new Uint8Array(signature))}`;
+}
+async function decodeCursor(
+  cursor: string,
+  actor: Principal,
+  filter: ListFilter,
+  secret: string,
+) {
   try {
-    if (new URL(origin).origin !== new URL(request.url).origin) {
-      throw new GateStoreError(403, "Cross-origin actions are not allowed.");
-    }
-  } catch (error) {
-    if (error instanceof GateStoreError) {
-      throw error;
-    }
-    throw new GateStoreError(403, "Origin header is invalid.");
+    if (cursor.length > 2048) throw new Error();
+    const parts = cursor.split(".");
+    const [payload, signature] = parts;
+    if (
+      parts.length !== 2 ||
+      !payload ||
+      !signature ||
+      !(await crypto.subtle.verify(
+        "HMAC",
+        await hmacKey(secret),
+        unbase64(signature),
+        new TextEncoder().encode(payload),
+      ))
+    )
+      throw new Error();
+    const data = JSON.parse(
+      new TextDecoder().decode(unbase64(payload)),
+    ) as CursorData;
+    if (
+      data.identityId !== actor.identityId ||
+      data.view !== filter.view ||
+      data.status !== filter.status ||
+      typeof data.id !== "string" ||
+      typeof data.createdAt !== "string" ||
+      !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(data.createdAt)
+    )
+      throw new Error();
+    return { createdAt: data.createdAt, id: data.id };
+  } catch {
+    throw new GateStoreError(
+      400,
+      "Invalid cursor for this identity or filter.",
+    );
   }
 }

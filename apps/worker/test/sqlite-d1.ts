@@ -4,13 +4,21 @@ import { DatabaseSync } from "node:sqlite";
 export class SqliteD1Database implements D1Database {
   private readonly database = new DatabaseSync(":memory:");
 
-  constructor() {
+  constructor(applyMvpMigration = true) {
     this.database.exec(
       readFileSync(
         new URL("../migrations/0001_gate.sql", import.meta.url),
         "utf8",
       ),
     );
+    if (applyMvpMigration) {
+      this.database.exec(
+        readFileSync(
+          new URL("../migrations/0002_human_mvp.sql", import.meta.url),
+          "utf8",
+        ),
+      );
+    }
   }
 
   prepare(query: string): D1PreparedStatement {

@@ -12,6 +12,11 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@hookform/resolvers": "catalog:",
+    "@tanstack/react-query": "catalog:",
+    "react-hook-form": "catalog:",
+    "react-router-dom": "catalog:",
+    "zod": "catalog:",
     "@fontsource-variable/instrument-sans": "catalog:",
     "@fontsource-variable/newsreader": "catalog:",
     "@workspace/contracts": "workspace:*",
@@ -19,6 +24,9 @@
     "react-dom": "catalog:"
   },
   "devDependencies": {
+    "@testing-library/react": "catalog:",
+    "@testing-library/user-event": "catalog:",
+    "jsdom": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",

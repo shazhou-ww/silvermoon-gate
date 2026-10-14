@@ -4,9 +4,5 @@ AUTH_URL=http://localhost:5173/api/auth
 AUTH_GITHUB_ID=
 AUTH_GITHUB_SECRET=
 
-AUTH_GOOGLE_ID=
-AUTH_GOOGLE_SECRET=
-
-AUTH_MICROSOFT_ENTRA_ID_ID=
-AUTH_MICROSOFT_ENTRA_ID_SECRET=
-AUTH_MICROSOFT_ENTRA_ID_ISSUER=https://login.microsoftonline.com/common/v2.0
+# Gate identities and direct permissions are provisioned only by reviewed SQL.
+# See migrations/0002_human_mvp.sql; no administrator/browser bypass exists.

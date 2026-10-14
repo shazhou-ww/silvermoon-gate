@@ -7,6 +7,17 @@ allowBuilds:
   workerd: true
 
 catalog:
+  esbuild: ^0.28.2
+  miniflare: 5.20261012.0-beta
+  "@hookform/resolvers": ^5.9.1
+  "@tanstack/react-query": ^5.104.2
+  "@testing-library/react": ^16.3.3
+  "@testing-library/user-event": ^14.6.8
+  ajv: ^8.20.0
+  jsdom: ^30.1.2
+  react-hook-form: ^7.90.0
+  react-router-dom: ^7.18.4
+  zod: ^4.6.7
   "@auth/core": ^0.41.3
   "@cloudflare/workers-types": ^5.20261014.1
   "@eslint/js": ^10.0.1

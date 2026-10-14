@@ -13,6 +13,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "ajv": "catalog:",
+    "zod": "catalog:",
     "@auth/core": "catalog:",
     "@hono/auth-js": "catalog:",
     "@workspace/contracts": "workspace:*",
@@ -20,6 +22,8 @@
     "hono": "catalog:"
   },
   "devDependencies": {
+    "esbuild": "catalog:",
+    "miniflare": "catalog:",
     "@cloudflare/workers-types": "catalog:",
     "wrangler": "catalog:"
   }
