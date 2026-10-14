@@ -37,8 +37,3 @@ attributable and auditable across service outages and future reviews.
   verifier can validate it offline against a stated trust-bundle snapshot.
 - The identity, delegation, request, and decision history supports audit of who
   acted, under what authority, and what Gate asserted at the time.
-
-## Next step
-
-Confirm the trust boundaries and authorization model captured in the supporting
-design notes before choosing an implementation or hosting target.
