@@ -1,4 +1,4 @@
-# Gate Service：可复用的审批网关
+# 阶段 4：完成 Gate Service 可复用审批网关
 
 ## Problem
 
@@ -10,7 +10,8 @@ PGH 回归任务、AI 代理和人工工作流都需要审批，但由各调用�
 
 ## Boundaries
 
-- 审批策略和身份授权由 Gate 负责；调用方只需集成请求创建、等待审批和恢复流程，无需重复实现这些规则。
+- 本 Idea 是最终完成阶段；前置为三个 MVP，顺序及闭环见
+  [MVP 路线](MVP-roadmap.md)。继承前轮能力；审批策略和身份授权由 Gate 负责，调用方只集成创建、等待与恢复，无需重复实现策略。
 - 区分已认证的实际操作者与被委托的权限范围：Identity（身份）必须依据明确授予且受限的 Delegate（委托权限）行事；仅有创建关系或来源链路并不代表获得权限。
 - 实现仓库为
   `shazhou-ww/silvermoon-gate`，源自 Cloudflare 全栈预设；目标 Worker 主机名为

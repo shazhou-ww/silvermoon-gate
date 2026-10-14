@@ -1,10 +1,15 @@
 # Deployment
 
+本契约为最终生产阶段；前置三个 MVP 的受限试点不能代替生产验收。复用已验证的在线与离线调用路径，再验证委托、强认证和生产运维。
+
 ## Steps
 
 ### D-S01: 确定服务归属与运维负责人
 
-将 `shazhou-ww/silvermoon-gate` 作为服务仓库，并计划托管于 Cloudflare Workers。确认运维负责人及其 Cloudflare 账户访问权限。部署前，验证 `gate.silvermoon.work` 属于有效 Zone，且不存在会妨碍绑定 Worker Custom Domain 的冲突 DNS 记录。
+将 `shazhou-ww/silvermoon-gate` 作为服务仓库，并计划托管于 Cloudflare
+Workers。确认运维负责人及其 Cloudflare 账户访问权限。部署前，验证
+`gate.silvermoon.work` 属于有效 Zone，且不存在会妨碍绑定 Worker Custom
+Domain 的冲突 DNS 记录。
 
 ### D-S02: 建立受保护的身份、载荷与密钥运维机制
 
@@ -18,7 +23,9 @@
 
 ### D-AC01: 服务归属与部署边界明确
 
-相关负责人已记录并批准仓库、Cloudflare 环境、运维负责人、支持边界以及 `gate.silvermoon.work` 自定义域名配置；通过仓库/配置证据、Zone 与 DNS 资格验证及负责人签字证明。只有部署成功且 DNS 解析正常，才能宣称该主机名已上线。
+相关负责人已记录并批准仓库、Cloudflare 环境、运维负责人、支持边界以及
+`gate.silvermoon.work`
+自定义域名配置；通过仓库/配置证据、Zone 与 DNS 资格验证及负责人签字证明。只有部署成功且 DNS 解析正常，才能宣称该主机名已上线。
 
 ### D-AC02: 调用方能够安全验证决策
 
