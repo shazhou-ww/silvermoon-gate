@@ -1,2 +1,3 @@
 {"type":"setLanguage","payload":{"language":"zh-CN"}}
 {"type":"setAlias","timestamp":"2026-10-14T14:13:06.290Z","payload":{"alias":"gate-mvp-human"}}
+{"type":"submitIdeal","timestamp":"2026-10-14T14:18:57.708Z","payload":{"idealRevision":"1ebc25dd12841fd41dd52ea02aacfe119c92decb"}}

@@ -1,2 +1,3 @@
 {"type":"setLanguage","payload":{"language":"zh-CN"}}
 {"type":"setAlias","timestamp":"2026-10-14T14:15:43.089Z","payload":{"alias":"gate-mvp-credential"}}
+{"type":"submitIdeal","timestamp":"2026-10-14T14:19:12.821Z","payload":{"idealRevision":"f3d5841a3230f14ca1ec748ea1fb893d11098527"}}

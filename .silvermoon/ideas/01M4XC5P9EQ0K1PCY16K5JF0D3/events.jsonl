@@ -1,2 +1,3 @@
 {"type":"setLanguage","payload":{"language":"zh-CN"}}
 {"type":"setAlias","timestamp":"2026-10-14T14:14:23.249Z","payload":{"alias":"gate-mvp-agent"}}
+{"type":"submitIdeal","timestamp":"2026-10-14T14:19:06.081Z","payload":{"idealRevision":"2a2d09fb241ae21e451d61a4f669e1d7b46ffa5b"}}
