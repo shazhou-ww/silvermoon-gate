@@ -6,8 +6,9 @@
 
 Use `shazhou-ww/silvermoon-gate` as the service repository and Cloudflare
 Workers as the intended host. Confirm the operating owner, Cloudflare account
-access, and that `gate.silvermoon.work` is available in an active zone before
-deployment.
+access. Before deployment, verify that `gate.silvermoon.work` belongs to an
+active zone and has no conflicting DNS record that prevents attaching a Worker
+Custom Domain.
 
 ### D-S02: Establish protected identity, payload, and key operations
 
@@ -28,8 +29,8 @@ compromised-key status handling.
 The repository, Cloudflare environment, operating owner, support boundary, and
 `gate.silvermoon.work` custom-domain configuration are documented and approved
 by the responsible stakeholders; prove this with repository/configuration
-evidence and owner sign-off. A successful deployment and DNS resolution are
-required before claiming the hostname is live.
+evidence, zone and DNS eligibility, and owner sign-off. A successful deployment
+and DNS resolution are required before claiming the hostname is live.
 
 ### D-AC02: Consumers can verify decisions safely
 
