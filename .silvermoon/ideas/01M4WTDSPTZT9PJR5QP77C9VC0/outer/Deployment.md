@@ -2,45 +2,28 @@
 
 ## Steps
 
-### D-S01: Select the service home and operating owner
+### D-S01: 确定服务归属与运维负责人
 
-Use `shazhou-ww/silvermoon-gate` as the service repository and Cloudflare
-Workers as the intended host. Confirm the operating owner, Cloudflare account
-access. Before deployment, verify that `gate.silvermoon.work` belongs to an
-active zone and has no conflicting DNS record that prevents attaching a Worker
-Custom Domain.
+将 `shazhou-ww/silvermoon-gate` 作为服务仓库，并计划托管于 Cloudflare Workers。确认运维负责人及其 Cloudflare 账户访问权限。部署前，验证 `gate.silvermoon.work` 属于有效 Zone，且不存在会妨碍绑定 Worker Custom Domain 的冲突 DNS 记录。
 
-### D-S02: Establish protected identity, payload, and key operations
+### D-S02: 建立受保护的身份、载荷与密钥运维机制
 
-Configure authentication, payload access and retention controls, database audit
-protections, signing-key lifecycle, and distribution of versioned verifier trust
-bundles.
+配置认证、载荷访问与保留控制、数据库审计保护、签名密钥生命周期，以及带版本验证方信任包的分发机制。
 
-### D-S03: Pilot caller integration and recovery behavior
+### D-S03: 试点调用方集成与恢复流程
 
-Integrate a PGH caller and one independent verifier, then exercise online
-request handling, matching-payload offline verification, withdrawal, and
-compromised-key status handling.
+集成一个 PGH 调用方和一个独立验证方，并演练在线请求处理、载荷匹配的离线验证、请求撤回和密钥泄露状态处理。
 
 ## Acceptance criteria
 
-### D-AC01: Ownership and deployment boundary are explicit
+### D-AC01: 服务归属与部署边界明确
 
-The repository, Cloudflare environment, operating owner, support boundary, and
-`gate.silvermoon.work` custom-domain configuration are documented and approved
-by the responsible stakeholders; prove this with repository/configuration
-evidence, zone and DNS eligibility, and owner sign-off. A successful deployment
-and DNS resolution are required before claiming the hostname is live.
+相关负责人已记录并批准仓库、Cloudflare 环境、运维负责人、支持边界以及 `gate.silvermoon.work` 自定义域名配置；通过仓库/配置证据、Zone 与 DNS 资格验证及负责人签字证明。只有部署成功且 DNS 解析正常，才能宣称该主机名已上线。
 
-### D-AC02: Consumers can verify decisions safely
+### D-AC02: 调用方能够安全验证决策
 
-A deployed pilot blocks on pending requests and releases only for an
-authenticated decision credential whose signature and expected payload digest
-match; prove this with end-to-end traces and independent offline verifier
-results that identify the trust-bundle version.
+已部署的试点会在请求待处理期间阻塞，只有在决策凭证通过认证、签名有效且载荷摘要与预期值匹配时才放行；通过端到端跟踪和注明信任包版本的独立离线验证结果证明。
 
-### D-AC03: Operational safeguards are exercised
+### D-AC03: 运维防护措施经过演练
 
-Operators demonstrate access auditing, payload protection, key rotation and
-compromised-key handling, plus restoration of request/audit state; prove this
-with reviewed runbooks and recorded recovery exercises.
+运维人员演示访问审计、载荷保护、密钥轮换、密钥泄露处理，以及请求/审计状态恢复；通过经审查的运行手册和留档的恢复演练证明。

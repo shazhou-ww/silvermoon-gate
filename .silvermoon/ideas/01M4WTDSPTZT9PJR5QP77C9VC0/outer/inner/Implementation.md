@@ -2,49 +2,28 @@
 
 ## Steps
 
-### I-S01: Implement versioned request and template behavior
+### I-S01: 实现带版本的请求与模板行为
 
-Implement versioned templates and requests in Cloudflare D1. Requests pin
-template and payload-schema versions while resolving the eligible approver
-roster dynamically at decision time. Persist canonical immutable payload
-snapshots, idempotency fingerprints, requester-defined thread IDs, and
-append-only request and approver-roster audit events. Make withdrawal and the
-first eligible approve/reject decision conditional and atomic with their audit
-event.
+在 Cloudflare D1 中实现带版本的模板和请求。请求固定使用指定版本的模板和载荷 schema，并在提交决策时动态解析符合条件的审批人名单。持久化规范化且不可变的载荷快照、幂等指纹、由请求方定义的 thread ID，以及只追加的请求与审批人名单审计事件。撤回操作和首个符合条件的批准/拒绝决策都必须带条件地执行，并与对应审计事件原子提交。
 
-### I-S02: Define identity and delegated authority
+### I-S02: 定义身份与委托权限
 
-Specify Identity, immutable Delegate scope, time-bounded Grant, delegation
-limits, actor attribution, authentication, and the authorization checks
-performed at decision time.
+明确 Identity（身份）、不可变的 Delegate（委托权限）范围、有时限的 Grant（授权）、委托限制、操作者归属、认证方式，以及提交决策时执行的授权检查。
 
-### I-S03: Define credentials and audit boundaries
+### I-S03: 定义凭证与审计边界
 
-Specify payload canonicalization, signed credential claims, offline verification
-and key-status semantics, plus atomic state/audit persistence and protected
-payload handling.
+明确载荷规范化方式、签名凭证声明、离线验证和密钥状态语义，以及状态与审计记录的原子持久化和受保护载荷的处理方式。
 
 ## Acceptance criteria
 
-### I-AC01: Requests have deterministic outcomes
+### I-AC01: 请求具有确定的结果
 
-Requests persist in D1 with pinned template/schema versions, dynamic
-decision-time approvers, canonical payload snapshots, and requester-scoped
-idempotency; only a pending request can be withdrawn by its requester or decided
-once by an eligible approver, with matching append-only audit events. Prove it
-by applying the production migration to SQLite and running store/API tests for
-normal creation, replay/conflict, access control, withdrawal, approver
-replacement, and competing decisions.
+请求在 D1 中持久化，并固定模板/schema 版本、在提交决策时动态解析审批人、保存规范化载荷快照，并按请求方保证幂等；只有待处理请求可由请求方撤回，或由符合条件的审批人作出一次决策，且须产生相应的只追加审计事件。将生产迁移应用于 SQLite，并运行存储层/API 测试，覆盖正常创建、重放/冲突、访问控制、撤回、审批人更换和竞争决策，以证明该行为。
 
-### I-AC02: Delegated actions are attributable and bounded
+### I-AC02: 委托操作可追溯且受限
 
-A reviewed authorization model distinguishes actor, Delegate, and Grant and
-rejects expired, revoked, out-of-scope, or disallowed transitive use; prove it
-with authorization tests and audit examples.
+经过审查的授权模型能够区分操作者、Delegate 和 Grant，并拒绝已过期、已撤销、超出范围或不允许的传递式委托；通过授权测试和审计示例证明。
 
-### I-AC03: Credentials verify the intended decision
+### I-AC03: 凭证能够验证预期决策
 
-An independent verifier validates the standard signed credential and requires an
-exact expected payload-digest match while reporting its trust-bundle version;
-prove it with cross-implementation test vectors, key-status cases, and database
-consistency tests.
+独立验证方能够验证标准签名凭证，要求载荷摘要与预期值精确匹配，并报告所用信任包版本；通过跨实现测试向量、密钥状态案例和数据库一致性测试证明。
