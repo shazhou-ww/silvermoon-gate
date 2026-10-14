@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>验证与审计</title>
+    <link rel="stylesheet" href="../review.css" />
+  </head>
+  <body class="scenario">
+    <p class="eyebrow">目标设计 / 不执行密码学验证 / 所有结果为示例</p>
+    <div class="app">
+      <header class="topbar">
+        <strong>Silvermoon Gate</strong
+        ><a href="02-decision.html">请求详情示例</a>
+      </header>
+      <main class="content">
+        <h1>验证与审计</h1>
+        <section class="card">
+          <h2>独立核对放行条件</h2>
+          <p>
+            预期摘要来自调用方载荷，不能从凭证自动填入。trust-bundle
+            必须来自可信渠道。
+          </p>
+          <label
+            >示例结果<select id="case">
+              <option value="match">批准且所有条件匹配</option>
+              <option value="reject">有效签名，但决定是拒绝</option>
+              <option value="mismatch">预期摘要不匹配</option>
+              <option value="compromised">密钥已泄露</option>
+              <option value="stale">信任快照过旧</option>
+              <option value="invalid">签名无效</option>
+            </select></label
+          >
+          <button id="show">查看结果示意（非验证）</button>
+          <section id="verification" hidden aria-live="polite">
+            <h3 id="verdict" tabindex="-1"></h3>
+            <p id="reason"></p>
+            <p>trust-bundle demo-v1 · keyId demo-key · 非真实签名或摘要</p>
+          </section>
+        </section>
+        <div class="detail-grid">
+          <section class="card">
+            <h2>决策凭证</h2>
+            <p>已批准 · 凭证待签发（示例）</p>
+            <p>无需重新批准；失败可恢复签发。凭证未就绪时不提供假下载按钮。</p>
+          </section>
+          <section class="card">
+            <h2>逐请求审计</h2>
+            <p>req-demo-001 · actor Lin · authority release-owner</p>
+            <p>当时 Grant 有效；当前已撤销，历史不改写。</p>
+            <details>
+              <summary>授权证据示例</summary>
+              <p>
+                delegate-release /
+                grant-demo、范围和决定时间。载荷字段因无读取权限而遮蔽，不能由前端隐藏已下载数据。
+              </p>
+            </details>
+            <p>不可修改/删除历史；不提供全库导出或管理员绕过。</p>
+          </section>
+        </div>
+        <p class="warning">
+          真正放行必须由独立验证器验证
+          approved、签名、预期摘要及合格信任快照。本页面只演示解释结果。
+        </p>
+      </main>
+    </div>
+    <script src="../scenario.js"></script>
+    <script>
+      const cases = {
+        match: [
+          "示例：可放行",
+          "批准、签名、预期摘要与信任状态均匹配。这里没有真的验证。",
+        ],
+        reject: ["示例：不可放行", "有效签名的拒绝决定仍然不放行。"],
+        mismatch: ["示例：不可放行", "预期摘要不匹配，不是同一个业务载荷。"],
+        compromised: ["示例：不可放行", "该 keyId 已泄露，凭证不可信。"],
+        stale: ["示例：不可放行", "快照不满足调用方的新鲜度策略。"],
+        invalid: ["示例：不可放行", "签名验证失败。"],
+      };
+      document.querySelector("#show").addEventListener("click", () => {
+        const [title, reason] = cases[document.querySelector("#case").value];
+        document.querySelector("#verdict").textContent = title;
+        document.querySelector("#reason").textContent = reason;
+        document.querySelector("#verification").hidden = false;
+        document.querySelector("#verdict").focus();
+        reportHeight();
+      });
+    </script>
+  </body>
+</html>

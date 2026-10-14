@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Delegate 与 Grant</title>
+    <link rel="stylesheet" href="../review.css" />
+  </head>
+  <body class="scenario">
+    <p class="eyebrow">目标设计 / 权限所有者视图 / 不执行授权</p>
+    <div class="app">
+      <header class="topbar">
+        <strong>Silvermoon Gate</strong
+        ><a href="05-identities.html">身份示例</a>
+      </header>
+      <main class="content">
+        <h1>权限与授权</h1>
+        <p>Delegate 定义固定范围，Grant 分配给身份并限定时间。</p>
+        <div class="detail-grid">
+          <section class="card">
+            <h2>我拥有的 Delegate</h2>
+            <dl class="fact">
+              <dt>所有者</dt>
+              <dd>release-owner</dd>
+              <dt>范围</dt>
+              <dd>仅 release-review 的决定操作，不包含模板管理</dd>
+              <dt>转委托</dt>
+              <dd>第一版关闭</dd>
+            </dl>
+            <p>范围变更创建替代 Delegate；旧 Grant 不自动迁移。</p>
+          </section>
+          <section class="card">
+            <h2>Grant grant-demo</h2>
+            <span class="badge">有效 · 示例</span>
+            <dl class="fact">
+              <dt>接收身份</dt>
+              <dd>Lin · id-human-lin</dd>
+              <dt>有效期</dt>
+              <dd>2026-10-14 00:00 至 2026-10-15 00:00 UTC</dd>
+            </dl>
+            <button
+              data-reveal="revoke"
+              aria-controls="revoke"
+              aria-expanded="false"
+            >
+              准备撤销
+            </button>
+            <section id="revoke" hidden>
+              <h3 tabindex="-1">不可恢复的撤销</h3>
+              <p class="warning">
+                仅阻止未来使用；不否认当时有效的历史决定。延期必须签发新
+                Grant。此处不执行撤销。
+              </p>
+              <button data-cancel="revoke" class="secondary">
+                取消撤销示例
+              </button>
+            </section>
+          </section>
+        </div>
+        <section class="card">
+          <h2>签发 Grant 前核对</h2>
+          <label>接收 Identity<input value="id-agent-demo" readonly /></label
+          ><label
+            >截止时间（UTC）<input value="2026-10-15T00:00:00Z" readonly
+          /></label>
+          <p>
+            服务器必须拒绝超范围、停用 Delegate
+            或无效期限；这里仅显示拟议核对内容。
+          </p>
+        </section>
+        <section class="card">
+          <h3>授予我的权限</h3>
+          <p>
+            区分尚未生效、有效、到期、撤销、上游失效，不把所有失效都叫“过期”。无管理权时只读，不能用菜单可见性代替权限检查。
+          </p>
+        </section>
+      </main>
+    </div>
+    <script src="../scenario.js"></script>
+  </body>
+</html>

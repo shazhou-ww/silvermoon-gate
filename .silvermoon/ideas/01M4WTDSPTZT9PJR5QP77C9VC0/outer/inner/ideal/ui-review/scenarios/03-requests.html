@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>我的请求与新建</title>
+    <link rel="stylesheet" href="../review.css" />
+  </head>
+  <body class="scenario">
+    <p class="eyebrow">目标设计 / 虚构数据 / 不调用 API</p>
+    <div class="app">
+      <header class="topbar">
+        <strong>Silvermoon Gate</strong><a href="01-workspace.html">待我审批</a>
+      </header>
+      <main class="content">
+        <h1>我的请求</h1>
+        <p class="muted">追踪审批，不编辑已经提交的业务快照。</p>
+        <article class="card">
+          <span class="badge">待处理</span>
+          <h2>demo-build-42 发布审核</h2>
+          <p>release-review v3 · Thread release-42 · req-demo-001</p>
+          <p>凭证：尚无决定 · 不自动超时</p>
+          <a href="02-decision.html">请求详情示例</a>
+          <div class="actions">
+            <button
+              data-reveal="withdraw"
+              aria-controls="withdraw"
+              aria-expanded="false"
+            >
+              准备撤回
+            </button>
+          </div>
+          <section id="withdraw" hidden>
+            <h3 tabindex="-1">撤回 req-demo-001？</h3>
+            <p class="warning">
+              停止未来决定，不删除历史；另一审批人可能先提交。此处不执行真实撤回。
+            </p>
+            <button data-cancel="withdraw" class="secondary">
+              取消撤回示例
+            </button>
+          </section>
+        </article>
+        <section class="card">
+          <h2>新建请求</h2>
+          <p>
+            模板 → 载荷 → 核对。下方仅演示核对状态，不执行 schema 校验或创建。
+          </p>
+          <label
+            >固定模板版本<select>
+              <option>发布审核 · v3 · schema v1</option>
+            </select></label
+          >
+          <label
+            >业务载荷 JSON<textarea id="payload">
+{ "action": "release", "candidate": "demo-build-43" }</textarea>
+          </label>
+          <label
+            >Thread（可选，只分组不授予权限）<input value="release-43"
+          /></label>
+          <button id="preview">核对示例</button>
+          <section id="preview-result" hidden aria-live="polite">
+            <h3 tabindex="-1">提交前核对</h3>
+            <pre id="snapshot"></pre>
+            <p>
+              请求方 Lin · 固定
+              v3。最终由服务端校验并计算摘要。幂等键在一次提交期间保留，拒绝/撤回重试用新键。
+            </p>
+            <p class="warning">
+              没有创建任何请求。校验失败保留输入；超时显示结果未确认，不静默重建。
+            </p>
+          </section>
+        </section>
+        <section class="card">
+          <h3>列表状态</h3>
+          <p>
+            空列表：引导新建。读取失败：保留筛选并提供重试，不显示“无请求”。只分页读取获授权请求。
+          </p>
+        </section>
+      </main>
+    </div>
+    <script src="../scenario.js"></script>
+    <script>
+      document.querySelector("#preview").addEventListener("click", () => {
+        document.querySelector("#snapshot").textContent =
+          document.querySelector("#payload").value;
+        const r = document.querySelector("#preview-result");
+        r.hidden = false;
+        r.querySelector("h3").focus();
+        reportHeight();
+      });
+    </script>
+  </body>
+</html>

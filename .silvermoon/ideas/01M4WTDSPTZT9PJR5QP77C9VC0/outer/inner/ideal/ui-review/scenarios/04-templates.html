@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>模板与版本</title>
+    <link rel="stylesheet" href="../review.css" />
+  </head>
+  <body class="scenario">
+    <p class="eyebrow">目标设计 / 模板管理权限示例 / 不调用 API</p>
+    <div class="app">
+      <header class="topbar">
+        <strong>Silvermoon Gate</strong
+        ><a href="03-requests.html">新建请求示例</a>
+      </header>
+      <main class="content">
+        <h1>发布审核</h1>
+        <p>当前可用 v3 · 管理权限不等于审批权限</p>
+        <div class="detail-grid">
+          <section class="card">
+            <h2>不可变版本内容</h2>
+            <dl class="fact">
+              <dt>用途</dt>
+              <dd>核对发布候选版本</dd>
+              <dt>schema v1</dt>
+              <dd>action=release、candidate 必填</dd>
+              <dt>认证要求</dt>
+              <dd>决定前需模板要求的 step-up</dd>
+            </dl>
+            <details>
+              <summary>版本差异示例</summary>
+              <p>v2 → v3：认证要求提高。已创建的请求仍使用原版本。</p>
+            </details>
+            <p>修改 schema / 认证要求必须发布新版本，不能保存覆盖 v3。</p>
+          </section>
+          <section class="card">
+            <h2>当前合格权限主体</h2>
+            <p>release-owner · id-owner-demo</p>
+            <p>名单可以改变，但增删必须留审计。</p>
+            <button
+              data-reveal="roster"
+              aria-controls="roster"
+              aria-expanded="false"
+            >
+              审阅名单变更
+            </button>
+            <section id="roster" hidden>
+              <h3 tabindex="-1">移除 release-owner？</h3>
+              <p class="warning">
+                立即影响 v3 的待处理请求；过去决定保持不变。不在此处真的移除。
+              </p>
+              <button data-cancel="roster" class="secondary">
+                取消名单示例
+              </button>
+            </section>
+          </section>
+        </div>
+        <section class="card">
+          <h2>发布新版本</h2>
+          <p>
+            编辑 → schema 校验 → 载荷预览 →
+            发布确认；错误与并发冲突保留草稿。此示意不提供假发布按钮。
+          </p>
+        </section>
+        <section class="card">
+          <h2>停用模板</h2>
+          <button
+            data-reveal="disable"
+            aria-controls="disable"
+            aria-expanded="false"
+          >
+            查看停用影响
+          </button>
+          <section id="disable" hidden>
+            <h3 tabindex="-1">只阻止新请求</h3>
+            <p>现有 pending 请求继续按固定版本处理；此操作不撤回所有请求。</p>
+            <button data-cancel="disable" class="secondary">
+              取消停用示例
+            </button>
+          </section>
+        </section>
+      </main>
+    </div>
+    <script src="../scenario.js"></script>
+  </body>
+</html>

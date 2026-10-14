@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>身份与 Agent</title>
+    <link rel="stylesheet" href="../review.css" />
+  </head>
+  <body class="scenario">
+    <p class="eyebrow">目标设计 / 虚构身份 / 没有真实 token</p>
+    <div class="app">
+      <header class="topbar">
+        <strong>Silvermoon Gate</strong
+        ><a href="06-authority.html">权限与授权示例</a>
+      </header>
+      <main class="content">
+        <h1>身份与 Agent</h1>
+        <div class="detail-grid">
+          <section class="card">
+            <h2>我的身份</h2>
+            <dl class="fact">
+              <dt>Gate ID</dt>
+              <dd>id-human-lin</dd>
+              <dt>类型 / 状态</dt>
+              <dd>人类 / 已启用</dd>
+              <dt>外部绑定</dt>
+              <dd>示例 issuer + subject，不按邮箱自动合并</dd>
+            </dl>
+            <p>新增绑定必须重新认证并证明所有权；发生冲突不合并身份。</p>
+            <details>
+              <summary>登录与 step-up</summary>
+              <p>
+                登录后回到原同源请求。模板要求 MFA
+                时走真正的强认证；失败可重试或取消，不用勾选框代替。
+              </p>
+            </details>
+          </section>
+          <section class="card">
+            <h2>regression-bot</h2>
+            <p>Agent · id-agent-demo · 负责人 Lin</p>
+            <p class="warning">创建 Agent 不自动继承 Lin 的审批权。</p>
+            <p>认证材料与业务 Grant 独立；短期 token 不代表永久权限。</p>
+            <button
+              data-reveal="material"
+              aria-controls="material"
+              aria-expanded="false"
+            >
+              展示一次性材料示意
+            </button>
+            <section id="material" hidden>
+              <h3 tabindex="-1">仅展示一次</h3>
+              <pre>DEMO-NOT-A-REAL-CREDENTIAL</pre>
+              <p>
+                这是无效占位。真实签发仅展示一次，关闭后不能找回；后续轮换而不是查看明文。
+              </p>
+              <button data-cancel="material" class="secondary">关闭示意</button>
+            </section>
+          </section>
+        </div>
+        <section class="card">
+          <h2>封存身份</h2>
+          <button data-reveal="seal" aria-controls="seal" aria-expanded="false">
+            核对封存影响
+          </button>
+          <section id="seal" hidden>
+            <h3 tabindex="-1">停止未来操作，保留过去证据</h3>
+            <p>
+              稳定 ID
+              不复用；认证绑定与决定历史保留。不删除审计、不改写已签发凭证。
+            </p>
+            <button data-cancel="seal" class="secondary">取消封存示例</button>
+          </section>
+        </section>
+        <section class="card">
+          <h3>失败与空状态</h3>
+          <p>
+            没有 Agent
+            时提供注册引导。会话过期重新登录；绑定冲突和已封存单独解释。轮换失败不能声称旧材料已撤销。
+          </p>
+        </section>
+      </main>
+    </div>
+    <script src="../scenario.js"></script>
+  </body>
+</html>
