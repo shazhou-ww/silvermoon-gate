@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { Dashboard } from "../src/ui.js";
 
 const bootstrap: BootstrapResponse = {
-  appName: "Signal Desk",
+  appName: "Silvermoon Gate",
   providers: [
     { id: "github", label: "GitHub" },
     { id: "google", label: "Google" },

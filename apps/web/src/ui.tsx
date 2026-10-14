@@ -17,10 +17,12 @@ export function Dashboard({ state }: { readonly state: DashboardState }) {
   return (
     <main className="shell">
       <header className="masthead">
-        <a className="brand" href="/" aria-label="Signal Desk home">
+        <a className="brand" href="/" aria-label="Silvermoon Gate home">
           <span className="brand-mark" aria-hidden="true" />
           <span>
-            {state.kind === "ready" ? state.bootstrap.appName : "Signal Desk"}
+            {state.kind === "ready"
+              ? state.bootstrap.appName
+              : "Silvermoon Gate"}
           </span>
         </a>
         <p>Cloudflare fullstack starter</p>

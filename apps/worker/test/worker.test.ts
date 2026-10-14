@@ -6,7 +6,7 @@ import type { Bindings } from "../src/env.js";
 import app, { toSessionResponse } from "../src/index.js";
 
 const baseBindings = {
-  APP_NAME: "Signal Desk",
+  APP_NAME: "Silvermoon Gate",
   AUTH_SECRET: "test-secret-that-is-long-enough-for-auth",
 } as Bindings;
 
@@ -20,7 +20,7 @@ describe("Worker", () => {
 
     expect(response.status).toBe(200);
     await expect(response.json<HealthResponse>()).resolves.toEqual({
-      service: "Signal Desk",
+      service: "Silvermoon Gate",
       status: "ok",
     });
   });

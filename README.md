@@ -1,28 +1,15 @@
-# Cloudflare fullstack preset
+# Silvermoon Gate
 
-A production-shaped Cloudflare starter with a React interface, a Hono Worker,
-same-origin static assets, and Auth.js sign-in through GitHub, Google, and
-Microsoft Entra ID.
+Silvermoon Gate is a reusable approval gateway. This repository is its initial
+Cloudflare foundation: a React interface, a Hono Worker, same-origin static
+assets, and inherited Auth.js sign-in scaffolding. Approval workflows,
+authorization, and credential issuance have not been implemented yet.
 
-The included **Signal Desk** interface is intentionally concrete enough to
-exercise authentication and deployment. Replace its name and visual language
-when deriving a product.
-
-## Derive a repository
-
-```sh
-git-lineage derive \
-  https://github.com/shazhou-ww/preset-cloudflare-fullstack.git \
-  my-service \
-  --branch main
-cd my-service
-pnpm install
-```
-
-This preset derives from
-[`preset-pnpm-monorepo`](https://github.com/shazhou-ww/preset-pnpm-monorepo).
-Its `.git-lineage.yaml` tracks that immediate parent. Run `git-lineage update`
-to merge later monorepo baseline changes.
+The planned production hostname is
+[`https://gate.silvermoon.work`](https://gate.silvermoon.work). Wrangler is
+configured to attach it as a Worker Custom Domain when deployed. Deployment
+requires an active Cloudflare zone and may create DNS records; no deployment or
+DNS change has been performed.
 
 ## Architecture
 
@@ -157,15 +144,16 @@ push to `main`. A manual workflow dispatch always attempts a deployment.
 Use a narrowly scoped Cloudflare token that can edit Workers scripts for the
 target account.
 
-## Before shipping a derived app
+## Current boundaries
 
-1. Change the package and repository metadata.
-2. Change the Worker name and compatibility date in
-   `apps/worker/wrangler.jsonc`.
-3. Replace Signal Desk content, metadata, and branding.
-4. Configure production callback URLs and secrets.
-5. Review the protected API routes and add application authorization.
-6. Enable the deployment workflow only after its environment is configured.
+- The existing sign-in flow and interface are inherited scaffolding, not the
+  final Gate identity or delegation model.
+- The service design and implementation plan are tracked in the repository's
+  Silvermoon idea record.
+- Configure production OAuth callback URLs and secrets only when the chosen
+  authentication design and deployment environment are ready.
+- Enable the deployment workflow only after its Cloudflare environment is
+  configured and reviewed.
 
 ## License
 

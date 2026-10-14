@@ -1,7 +1,7 @@
 {
-  "name": "preset-cloudflare-fullstack",
+  "name": "silvermoon-gate",
   "version": "0.0.0",
-  "description": "A Cloudflare fullstack preset with React, Hono, and multi-provider OAuth.",
+  "description": "Cloudflare full-stack foundation for the Silvermoon Gate approval service.",
   "keywords": [
     "typescript",
     "cloudflare",
@@ -9,16 +9,16 @@
     "react",
     "hono",
     "oauth",
-    "preset",
-    "template"
+    "approval",
+    "gate-service"
   ],
-  "homepage": "https://github.com/shazhou-ww/preset-cloudflare-fullstack#readme",
+  "homepage": "https://github.com/shazhou-ww/silvermoon-gate#readme",
   "bugs": {
-    "url": "https://github.com/shazhou-ww/preset-cloudflare-fullstack/issues"
+    "url": "https://github.com/shazhou-ww/silvermoon-gate/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/shazhou-ww/preset-cloudflare-fullstack.git"
+    "url": "git+https://github.com/shazhou-ww/silvermoon-gate.git"
   },
   "license": "MIT",
   "private": true,
