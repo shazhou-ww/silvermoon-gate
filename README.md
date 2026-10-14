@@ -31,6 +31,14 @@ The Worker package declares the web package as a workspace dependency. This is
 deployment topology rather than a runtime import: Turborepo builds web assets
 before validating or deploying the Worker.
 
+Approval requests are stored in the Worker-bound D1 database. A request pins a
+versioned template and payload schema; the eligible approver roster for that
+template version is dynamically replaceable. Request creation stores an
+immutable canonical JSON snapshot and SHA-256 digest, and an idempotency key is
+unique per requester. Decisions and requester withdrawal use conditional
+database updates so only a pending request can reach its first terminal state.
+Request and decision events are append-only in the database.
+
 ## Local development
 
 Create the local secret file:
@@ -121,6 +129,31 @@ https://example.com/api/auth
 ```
 
 Never commit `.dev.vars`; only `.dev.vars.example` belongs in Git.
+
+## Gate database and template administration
+
+Create a D1 database for the Worker and replace the local placeholder
+`database_id` in `apps/worker/wrangler.jsonc` with the ID returned by Wrangler:
+
+```sh
+pnpm --filter @workspace/worker exec wrangler d1 create silvermoon-gate
+pnpm --filter @workspace/worker exec wrangler d1 migrations apply silvermoon-gate --local
+```
+
+The same migration can be applied remotely only when the Cloudflare account and
+database are ready for deployment. Set `GATE_ADMIN_IDENTITY_IDS` in Wrangler
+configuration to a comma-separated allowlist of Auth.js identity IDs. An
+allowlisted administrator creates a new versioned template with
+`POST /api/templates`, including its payload schema version and initial
+approvers; the same administrator can replace the eligible approver roster for a
+specific version with `PUT /api/templates/:id/:version/approvers`. Request
+creation, request reads, decisions, and withdrawal require an authenticated
+session. Writes also require a same-origin `Origin` header. Request payloads are
+limited to 64 KiB.
+
+The current implementation records approval state and audit events but does not
+yet issue signed decision credentials. An `approved` response is not an
+offline-verifiable release credential.
 
 ## Commands
 

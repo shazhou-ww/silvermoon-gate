@@ -6,10 +6,13 @@ import type {
   SessionResponse,
 } from "@workspace/contracts";
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 import { secureHeaders } from "hono/secure-headers";
 
 import { createAuthConfig, getConfiguredProviders } from "./auth.js";
 import type { Bindings } from "./env.js";
+import { createGateApi } from "./gate-api.js";
+import { GateStoreError } from "./gate-store.js";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -20,6 +23,11 @@ app.use(
 );
 
 app.use("/api/auth/*", authHandler());
+
+app.use("/api/templates", verifyAuth());
+app.use("/api/templates/*", verifyAuth());
+app.use("/api/requests", verifyAuth());
+app.use("/api/requests/*", verifyAuth());
 
 app.get("/api/health", (context) =>
   context.json<HealthResponse>({
@@ -33,6 +41,11 @@ app.get("/api/bootstrap", (context) =>
     appName: context.env.APP_NAME,
     providers: getConfiguredProviders(context.env),
   }),
+);
+
+app.route(
+  "/api",
+  createGateApi((context) => getIdentityId(context.get("authUser").session)),
 );
 
 app.use("/api/me", verifyAuth());
@@ -50,6 +63,18 @@ app.notFound((context) =>
   ),
 );
 
+app.onError((error, context) => {
+  if (error instanceof GateStoreError) {
+    return context.json({ error: error.message }, error.status);
+  }
+  if (error instanceof HTTPException) {
+    return error.getResponse();
+  }
+
+  console.error("Gate API request failed.", error);
+  return context.json({ error: "Internal server error." }, 500);
+});
+
 export default app;
 
 export function toSessionResponse(session: Session): SessionResponse {
@@ -57,4 +82,15 @@ export function toSessionResponse(session: Session): SessionResponse {
     expires: session.expires,
     ...(session.user ? { user: session.user } : {}),
   };
+}
+
+export function getIdentityId(session: Session): string {
+  const identityId = session.user?.id;
+  if (!identityId) {
+    throw new GateStoreError(
+      403,
+      "The authenticated session has no stable identity ID.",
+    );
+  }
+  return identityId;
 }

@@ -18,7 +18,16 @@
   ],
   "vars": {
     "APP_NAME": "Silvermoon Gate",
+    "GATE_ADMIN_IDENTITY_IDS": "",
   },
+  "d1_databases": [
+    {
+      "binding": "GATE_DB",
+      "database_name": "silvermoon-gate",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations",
+    },
+  ],
   "observability": {
     "enabled": true,
   },

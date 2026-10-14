@@ -4,9 +4,13 @@
 
 ### I-S01: Implement versioned request and template behavior
 
-Define and implement version-pinned template and request contracts, request
-lifecycle, idempotent creation, withdrawal, threading, and atomic first-decision
-behavior.
+Implement versioned templates and requests in Cloudflare D1. Requests pin
+template and payload-schema versions while resolving the eligible approver
+roster dynamically at decision time. Persist canonical immutable payload
+snapshots, idempotency fingerprints, requester-defined thread IDs, and
+append-only request and approver-roster audit events. Make withdrawal and the
+first eligible approve/reject decision conditional and atomic with their audit
+event.
 
 ### I-S02: Define identity and delegated authority
 
@@ -24,10 +28,13 @@ payload handling.
 
 ### I-AC01: Requests have deterministic outcomes
 
-A reviewed contract defines template version pinning, dynamic approver
-resolution, idempotency conflicts, withdrawal, and single-winner concurrent
-decisions; prove it with contract tests covering normal and competing
-submissions.
+Requests persist in D1 with pinned template/schema versions, dynamic
+decision-time approvers, canonical payload snapshots, and requester-scoped
+idempotency; only a pending request can be withdrawn by its requester or decided
+once by an eligible approver, with matching append-only audit events. Prove it
+by applying the production migration to SQLite and running store/API tests for
+normal creation, replay/conflict, access control, withdrawal, approver
+replacement, and competing decisions.
 
 ### I-AC02: Delegated actions are attributable and bounded
 

@@ -4,13 +4,13 @@
 
 ### Implementation steps
 
-- [ ] **I-S01:** Implement versioned request and template behavior
+- [x] **I-S01:** Implement versioned request and template behavior
 - [ ] **I-S02:** Define identity and delegated authority
 - [ ] **I-S03:** Define credentials and audit boundaries
 
 ### Implementation acceptance criteria
 
-- [ ] **I-AC01:** Requests have deterministic outcomes
+- [x] **I-AC01:** Requests have deterministic outcomes
 - [ ] **I-AC02:** Delegated actions are attributable and bounded
 - [ ] **I-AC03:** Credentials verify the intended decision
 

@@ -1,14 +1,27 @@
 import type { BootstrapResponse, HealthResponse } from "@workspace/contracts";
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 
 import { createAuthConfig } from "../src/auth.js";
 import type { Bindings } from "../src/env.js";
-import app, { toSessionResponse } from "../src/index.js";
+import app, { getIdentityId, toSessionResponse } from "../src/index.js";
+import { SqliteD1Database } from "./sqlite-d1.js";
 
+const database = new SqliteD1Database();
 const baseBindings = {
   APP_NAME: "Silvermoon Gate",
+  ASSETS: {
+    fetch: () => Promise.resolve(new Response()),
+    connect: () => {
+      throw new Error("Asset fixture does not open sockets.");
+    },
+  },
   AUTH_SECRET: "test-secret-that-is-long-enough-for-auth",
-} as Bindings;
+  GATE_DB: database,
+} satisfies Bindings;
+
+afterAll(() => {
+  database.close();
+});
 
 describe("Worker", () => {
   it("reports health", async () => {
@@ -81,6 +94,16 @@ describe("Worker", () => {
     expect(response.status).toBe(401);
   });
 
+  it("protects Gate request endpoints", async () => {
+    const response = await app.request(
+      "http://example.test/api/requests",
+      {},
+      baseBindings,
+    );
+
+    expect(response.status).toBe(401);
+  });
+
   it("returns a JSON 404 for unknown API routes", async () => {
     const response = await app.request(
       "http://example.test/api/unknown",
@@ -115,5 +138,20 @@ describe("Worker", () => {
     ).toEqual({
       expires: "2099-01-01T00:00:00.000Z",
     });
+  });
+
+  it("requires a stable Auth.js identity ID", () => {
+    expect(
+      getIdentityId({
+        expires: "2099-01-01T00:00:00.000Z",
+        user: { id: "provider-user-42" },
+      }),
+    ).toBe("provider-user-42");
+    expect(() =>
+      getIdentityId({
+        expires: "2099-01-01T00:00:00.000Z",
+        user: {},
+      }),
+    ).toThrow("The authenticated session has no stable identity ID.");
   });
 });
