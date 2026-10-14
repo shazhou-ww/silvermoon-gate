@@ -2,8 +2,10 @@
 
 Silvermoon Gate is a reusable approval gateway. This repository is its initial
 Cloudflare foundation: a React interface, a Hono Worker, same-origin static
-assets, and inherited Auth.js sign-in scaffolding. Approval workflows,
-authorization, and credential issuance have not been implemented yet.
+assets, and inherited Auth.js sign-in scaffolding. The shared contracts package
+now provides canonical payload digests, request idempotency fingerprints, and
+request lifecycle transitions. Persistent approval workflows, authorization, and
+credential issuance are still under implementation.
 
 The planned production hostname is
 [`https://gate.silvermoon.work`](https://gate.silvermoon.work). Wrangler is

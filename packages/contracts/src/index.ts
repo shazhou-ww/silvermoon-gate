@@ -1,3 +1,16 @@
+export {
+  calculatePayloadDigest,
+  calculateRequestFingerprint,
+  canonicalizeJson,
+  transitionRequestStatus,
+} from "./gate.js";
+export type {
+  CreateGateRequest,
+  GateJsonValue,
+  GateRequestAction,
+  GateRequestStatus,
+} from "./gate.js";
+
 export const authProviderIds = [
   "github",
   "google",

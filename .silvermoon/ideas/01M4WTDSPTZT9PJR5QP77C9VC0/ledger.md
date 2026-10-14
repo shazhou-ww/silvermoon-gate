@@ -4,7 +4,7 @@
 
 ### Implementation steps
 
-- [ ] **I-S01:** Define request and template behavior
+- [ ] **I-S01:** Implement versioned request and template behavior
 - [ ] **I-S02:** Define identity and delegated authority
 - [ ] **I-S03:** Define credentials and audit boundaries
 

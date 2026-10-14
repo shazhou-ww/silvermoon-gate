@@ -2,10 +2,11 @@
 
 ## Steps
 
-### I-S01: Define request and template behavior
+### I-S01: Implement versioned request and template behavior
 
-Specify the versioned template and request contracts, request lifecycle,
-idempotent creation, withdrawal, threading, and atomic first-decision behavior.
+Define and implement version-pinned template and request contracts, request
+lifecycle, idempotent creation, withdrawal, threading, and atomic first-decision
+behavior.
 
 ### I-S02: Define identity and delegated authority
 
