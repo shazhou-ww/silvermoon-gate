@@ -1,5 +1,11 @@
 # Implementation
 
+## Design context
+
+依据 Ideal World 的 [业务模型](ideal/Business-model.md) 与
+[详细设计](ideal/Design.md)
+实施。细化包括禁止自审批、固定测试业务 schema、数据库条件授权、operationId 关联的唯一终态证据，以及失败/切换身份的缓存边界；本轮只是补设计，未完成下面条目。
+
 ## Steps
 
 ### I-S01: 实现直接身份与请求事实
