@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gate 目标体验设计</title>
+    <link rel="stylesheet" href="review.css" />
+  </head>
+  <body class="review">
+    <a class="skip" href="#review">跳到设计</a>
+    <header>
+      <p class="eyebrow">SILVERMOON GATE / PRODUCT DESIGN</p>
+      <h1>让每一次放行都有依据</h1>
+      <p>从待办进入业务、核对载荷和权限，再形成不可变决定与凭证。</p>
+    </header>
+    <main id="review">
+      <section class="decision">
+        <strong>审阅决定：是否以待办与审批详情为主路径？</strong>
+        <p>
+          全新目标设计，不比较或沿用半成品。所有身份、载荷、时间和摘要均为虚构示例。
+        </p>
+      </section>
+      <nav class="tabs" aria-label="设计场景">
+        <a
+          class="tab"
+          aria-current="page"
+          href="scenarios/01-workspace.html"
+          target="scenario-frame"
+          >01 待我审批</a
+        >
+        <a class="tab" href="scenarios/02-decision.html" target="scenario-frame"
+          >02 核对与决定</a
+        >
+      </nav>
+      <iframe
+        id="scenario-frame"
+        name="scenario-frame"
+        src="scenarios/01-workspace.html"
+        title="待我审批设计"
+      ></iframe>
+      <p>
+        这是示意审阅辅助，不是生产 UI，也不是规范契约。<a href="../UX.md"
+          >UX 设计依据</a
+        >
+        · <a href="../Business-model.md">业务模型</a> ·
+        <a href="../Tech-stack.md">技术选型</a>
+      </p>
+      <p>
+        示意仅包含场景切换、载荷展开、确认/取消和竞争结果；没有调用 API
+        或真实审批。
+      </p>
+      <strong>是否同意这个以业务、权限和真实结果为中心的产品方向？</strong>
+    </main>
+    <script>
+      const frame = document.querySelector("#scenario-frame");
+      const tabs = [...document.querySelectorAll(".tab")];
+      tabs.forEach((tab) =>
+        tab.addEventListener("click", () => {
+          tabs.forEach((t) => t.removeAttribute("aria-current"));
+          tab.setAttribute("aria-current", "page");
+          frame.title = `${tab.textContent.trim()}设计`;
+        }),
+      );
+      frame.addEventListener("load", () =>
+        frame.contentWindow.postMessage({ type: "gate:measure" }, "*"),
+      );
+      window.addEventListener("resize", () =>
+        frame.contentWindow.postMessage({ type: "gate:measure" }, "*"),
+      );
+      window.addEventListener("message", (event) => {
+        if (
+          event.source !== frame.contentWindow ||
+          event.data?.type !== "gate:height"
+        )
+          return;
+        const height = Number(event.data.height);
+        if (Number.isFinite(height) && height > 0)
+          frame.style.height = `${Math.ceil(height) + 2}px`;
+        const tab = tabs.find((t) =>
+          t.getAttribute("href").endsWith(event.data.scenario),
+        );
+        if (tab) {
+          tabs.forEach((t) => t.removeAttribute("aria-current"));
+          tab.setAttribute("aria-current", "page");
+          frame.title = `${tab.textContent.trim()}设计`;
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -12,9 +12,15 @@ PGH 回归任务、AI 代理和人工工作流都需要审批，但由各调用�
 
 - 审批策略和身份授权由 Gate 负责；调用方只需集成请求创建、等待审批和恢复流程，无需重复实现这些规则。
 - 区分已认证的实际操作者与被委托的权限范围：Identity（身份）必须依据明确授予且受限的 Delegate（委托权限）行事；仅有创建关系或来源链路并不代表获得权限。
-- 实现仓库为 `shazhou-ww/silvermoon-gate`，源自 Cloudflare 全栈预设；目标 Worker 主机名为 `gate.silvermoon.work`。Cloudflare 账户归属和生产部署仍需后续配置与验证。
+- 实现仓库为
+  `shazhou-ww/silvermoon-gate`，源自 Cloudflare 全栈预设；目标 Worker 主机名为
+  `gate.silvermoon.work`。Cloudflare 账户归属和生产部署仍需后续配置与验证。
 
 ## Acceptance criteria
+
+设计依据见 [业务模型](Business-model.md)、[目标 UX](UX.md)、
+[体验示意](ui-review/index.html) 和
+[技术选型](Tech-stack.md)。它们属于本构想的支撑材料，不以半成品为约束，也不代表生产能力已完成。
 
 - 调用方可以依据可复用、带版本的模板创建并跟踪审批请求；首位符合条件的审批人所作出的决定成为不可变的最终结果。
 - 签名凭证将决策绑定到请求、确切的载荷摘要、审批权限和实际操作者；独立验证方可依据明确指定的信任包快照离线验证该凭证。

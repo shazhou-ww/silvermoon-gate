@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>待我审批 · 目标设计</title>
+    <link rel="stylesheet" href="../review.css" />
+  </head>
+  <body class="scenario">
+    <p class="eyebrow">场景一 / 目标工作台 / 虚构数据</p>
+    <div class="app">
+      <header class="topbar">
+        <span class="brand">Silvermoon Gate</span><span>Lin · 人类身份</span>
+      </header>
+      <div class="layout">
+        <nav class="sidebar" aria-label="产品入口">
+          <p class="selected">待我审批</p>
+          <p>我的请求</p>
+          <p>模板</p>
+          <p>权限与身份</p>
+          <p>验证与审计</p>
+        </nav>
+        <main class="content">
+          <div class="intro">
+            <div>
+              <h1>待我审批</h1>
+              <p class="muted">先了解业务，再决定是否放行。</p>
+            </div>
+            <span class="badge">1 个待处理示例</span>
+          </div>
+          <article class="card">
+            <span class="badge">待处理</span>
+            <h2>发布候选版本 demo-build-42</h2>
+            <p>PGH 回归任务已完成，请审批发布操作。</p>
+            <dl class="fact">
+              <dt>请求方</dt>
+              <dd>regression-bot · Agent</dd>
+              <dt>模板</dt>
+              <dd>发布审核 · v3</dd>
+              <dt>我的权限</dt>
+              <dd>以 release-owner 权限，由 Lin 实际操作</dd>
+              <dt>创建时间</dt>
+              <dd>2026-10-14 20:15（示例）</dd>
+            </dl>
+            <div class="actions">
+              <a class="action" href="02-decision.html">查看载荷与权限</a>
+            </div>
+          </article>
+          <p class="warning">
+            资格在提交时重新验证。待处理请求不会自动批准或超时结束。
+          </p>
+          <section class="card">
+            <h3>只展示你有权查看的请求</h3>
+            <p class="muted">
+              工作台不按“管理员”身份公开所有载荷。权限失效后，请求可能退出你的待办。
+            </p>
+          </section>
+          <p class="muted">
+            示意辅助，非生产界面。此处没有真实筛选、新建、登录或后台操作。
+          </p>
+        </main>
+      </div>
+    </div>
+    <script>
+      function reportHeight() {
+        window.parent.postMessage(
+          {
+            type: "gate:height",
+            height: Math.ceil(document.body.getBoundingClientRect().height),
+            scenario: "01-workspace.html",
+          },
+          "*",
+        );
+      }
+      new ResizeObserver(reportHeight).observe(document.body);
+      window.addEventListener("load", reportHeight);
+      window.addEventListener("resize", reportHeight);
+      window.addEventListener("message", (event) => {
+        if (
+          event.source === window.parent &&
+          event.data?.type === "gate:measure"
+        )
+          reportHeight();
+      });
+    </script>
+  </body>
+</html>
