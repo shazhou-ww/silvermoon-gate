@@ -36,6 +36,9 @@ export const meSchema = z.object({
   permissions: z.object({ canCreate: z.boolean(), canDecide: z.boolean() }),
 });
 export type Me = z.infer<typeof meSchema>;
+export const bootstrapSchema = z.object({
+  providers: z.array(z.object({ id: z.literal("github"), label: z.string() })),
+});
 const statusSchema = z.enum(["pending", "approved", "rejected", "withdrawn"]);
 export const summarySchema = z.object({
   id: z.string().min(1),

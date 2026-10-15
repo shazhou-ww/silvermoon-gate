@@ -230,7 +230,7 @@ describe("MVP API", () => {
       "view=all",
       "status=bad",
       "limit=0",
-      "limit=101",
+      "limit=51",
       "limit=1.5",
       "limit=-2",
       "view=inbox&status=approved",

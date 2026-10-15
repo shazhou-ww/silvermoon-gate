@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { encode } from "@auth/core/jwt";
 import type { Account } from "@auth/core/types";
@@ -15,36 +14,13 @@ import {
   type Principal,
 } from "../src/gate-store.js";
 import { input } from "./fixtures.js";
+import { applyMigrations } from "./runtime-migrations.js";
 
 interface ApiBody {
   readonly request?: GateRequestRecord;
   readonly identity?: { readonly id: string };
   readonly replayed?: boolean;
   readonly error?: { readonly code: string; readonly traceId: string };
-}
-
-function migrationStatements(sql: string): string[] {
-  let remaining = sql.replace(/--[^\n]*/g, "").trim();
-  const statements: string[] = [];
-  while (remaining) {
-    let end = remaining.indexOf(";");
-    if (/^CREATE TRIGGER\b/i.test(remaining)) {
-      let depth = 0;
-      for (const token of remaining.matchAll(/\b(?:BEGIN|CASE|END)\b|;/gi)) {
-        const keyword = token[0].toUpperCase();
-        if (keyword === "BEGIN" || keyword === "CASE") depth++;
-        else if (keyword === "END") depth--;
-        else if (depth === 0) {
-          end = token.index;
-          break;
-        }
-      }
-    }
-    if (end < 0) throw new Error("Migration statement has no terminator.");
-    statements.push(remaining.slice(0, end + 1));
-    remaining = remaining.slice(end + 1).trim();
-  }
-  return statements;
 }
 
 describe("Production migrations and HTTP Worker on local workerd D1", () => {
@@ -78,15 +54,7 @@ describe("Production migrations and HTTP Worker on local workerd D1", () => {
       const { GATE_DB: db } = await mf.getBindings<{
         GATE_DB: D1Database;
       }>("gate-runtime-test");
-      for (const migration of ["0001_gate.sql", "0002_human_mvp.sql"]) {
-        const sql = readFileSync(
-          new URL(`../migrations/${migration}`, import.meta.url),
-          "utf8",
-        );
-        for (const statement of migrationStatements(sql)) {
-          await db.prepare(statement).run();
-        }
-      }
+      await applyMigrations(db);
       await db.batch([
         db.prepare(
           `INSERT INTO gate_identities VALUES
@@ -199,6 +167,28 @@ describe("Production migrations and HTTP Worker on local workerd D1", () => {
       expect(me.status).toBe(200);
       expect(me.body.identity?.id).toBe("lin");
       expect(me.cache).toBe("no-store");
+      const parallelCreates = await Promise.all(
+        Array.from({ length: 3 }, () =>
+          http("/requests", "lin", "POST", input, {
+            "Idempotency-Key": "parallel-create",
+          }),
+        ),
+      );
+      expect(parallelCreates.map((result) => result.status).sort()).toEqual([
+        200, 200, 201,
+      ]);
+      expect(
+        new Set(parallelCreates.map((result) => result.body.request?.id)).size,
+      ).toBe(1);
+      const parallelId = parallelCreates[0]?.body.request?.id;
+      expect(
+        await db
+          .prepare(
+            "SELECT COUNT(*) AS n FROM gate_request_events WHERE request_id=?",
+          )
+          .bind(parallelId)
+          .first("n"),
+      ).toBe(1);
       const first = await http("/requests", "lin", "POST", input, {
         "Idempotency-Key": "http-create",
       });

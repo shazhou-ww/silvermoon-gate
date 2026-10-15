@@ -90,7 +90,7 @@ export function createGateApi(resolveIdentity: IdentityResolver) {
       !/^[0-9]+$/.test(limitText) ||
       !Number.isInteger(limit) ||
       limit < 1 ||
-      limit > 100 ||
+      limit > 50 ||
       (view === "inbox" && status && status !== "pending")
     )
       throw new GateStoreError(400, "Invalid list filters.");

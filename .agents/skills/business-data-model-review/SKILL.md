@@ -1,14 +1,18 @@
 ---
 name: business-data-model-review
-description: "Create concise business data model review artifacts with Mermaid ER diagrams. Use when a human must review changes to domain entities, ownership, relationships, keys, lifecycle, migration, or compatibility, including append-only and ephemeral immutable semantics."
+description:
+  "Create concise business data model review artifacts with Mermaid ER diagrams.
+  Use when a human must review changes to domain entities, ownership,
+  relationships, keys, lifecycle, migration, or compatibility, including
+  append-only and ephemeral immutable semantics."
 argument-hint: "[model change or review goal]"
 user-invocable: true
 ---
 
 # Business Data Model Review
 
-Communicate the business meaning of a data change, not every storage detail.
-The reviewer should understand the decision and its consequences in about five
+Communicate the business meaning of a data change, not every storage detail. The
+reviewer should understand the decision and its consequences in about five
 minutes.
 
 ## Establish The Decision
@@ -35,8 +39,8 @@ Use Mermaid `erDiagram` syntax for the target business model.
   crossing lines, or dense entities slow comprehension. Name the question each
   view answers and state when a repeated box denotes the same entity.
 - Keep request-scoped values, derived projections, caches, and operational
-  records outside the durable entity model unless their lifecycle is part of
-  the decision.
+  records outside the durable entity model unless their lifecycle is part of the
+  decision.
 
 This is a business model first. Put physical table names, indexes, adapter
 details, and rollout mechanics in a short persistence or migration section only
@@ -80,10 +84,10 @@ erDiagram
   ACCOUNT ||--o{ AUDIT_EVENT : attributes
 ```
 
-Follow the diagrams with a compact lifecycle table for stereotyped entities
-and any surprising mutable entity. State what can change, how validity ends,
-whether deletion is allowed, and why the rule matters. A stereotype without
-these concrete semantics is decoration, not a reviewable contract.
+Follow the diagrams with a compact lifecycle table for stereotyped entities and
+any surprising mutable entity. State what can change, how validity ends, whether
+deletion is allowed, and why the rule matters. A stereotype without these
+concrete semantics is decoration, not a reviewable contract.
 
 ## Explain Only Governing Rules
 
@@ -107,8 +111,8 @@ or a clearly secondary appendix.
    cardinalities, relationship verbs, and line crossings.
 3. Cross-check diagram keys and relationships against the prose invariants and
    current source model.
-4. Confirm each migration statement preserves or deliberately changes
-   identity, ownership, history, and compatibility.
+4. Confirm each migration statement preserves or deliberately changes identity,
+   ownership, history, and compatibility.
 5. Report rendering or source checks that could not be performed.
 
 ## Present For Review

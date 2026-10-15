@@ -7,7 +7,10 @@
 实施。细化包括禁止自审批、固定测试业务 schema、数据库条件授权、operationId 关联的唯一终态证据，以及失败/切换身份的缓存边界。
 
 仓库实现与本地检查见
-[Verification.md](Verification.md)。源码已实现，真实OAuth/云端D1试点和既有仓库格式门禁仍待完成，不将本地测试冒充最终验收。
+[Verification.md](Verification.md)。2026-10-15 已补齐真实浏览器与本地 Worker/D1 的同源闭环、持久化重启与注销重放验证，修复五个既有格式阻断文件，
+`pnpm check`
+的十二个目标和 122 个测试全部通过，未降低 90% 覆盖率门槛。真实 GitHub
+OAuth 与授权云端 D1 试点仍待完成，不将本地测试冒充最终验收。
 
 ## Steps
 

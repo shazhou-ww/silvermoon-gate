@@ -20,13 +20,18 @@
 
 ## Payload, credentials, and trust
 
-- Gate 长期保存完整载荷以供审计。载荷使用 RFC 8785 JCS 规范化并以 SHA-256 计算摘要，摘要声明同时绑定其 schema 版本。
+- Gate 长期保存完整载荷以供审计。载荷使用 RFC 8785
+  JCS 规范化并以 SHA-256 计算摘要，摘要声明同时绑定其 schema 版本。
 - 标准签名凭证绑定请求、固定的模板版本、决策、载荷摘要、审批权限、实际操作者，以及 Gate 对决策时身份和授权检查均已通过的断言。
 - 离线放行必须同时满足签名有效，并且载荷摘要与调用方预期值匹配。离线验证信任 Gate 的授权断言，不会自行重放身份关系图。
-- 凭证作为不可变历史记录保存。如果确认某个签名密钥已泄露，则该 `keyId` 签发的所有凭证都视为不可信。离线验证方只能依据自己持有的密钥状态快照作出判断；验证结果必须注明所依据的快照。
+- 凭证作为不可变历史记录保存。如果确认某个签名密钥已泄露，则该 `keyId`
+  签发的所有凭证都视为不可信。离线验证方只能依据自己持有的密钥状态快照作出判断；验证结果必须注明所依据的快照。
 
 ## Audit and operational boundaries
 
 - 当前关系状态及其只追加的审计事件必须在同一数据库事务中原子提交。数据库不可变性控制、访问权限分离、备份和审计可降低篡改风险；本设计不假定存在外部加密日志锚点。
 - Identity 退役意味着停用并封存；保留不可复用的标识符和历史记录，而不是删除历史凭据。
-- 服务仓库为 `shazhou-ww/silvermoon-gate`，源自 `shazhou-ww/preset-cloudflare-fullstack`；目标托管平台为 Cloudflare Workers，配置的主机名为 `gate.silvermoon.work`。Cloudflare 账户归属、Zone 资格、部署访问权限和运维密钥保管仍待验证。目前尚未进行 DNS 更改或服务部署。
+- 服务仓库为 `shazhou-ww/silvermoon-gate`，源自
+  `shazhou-ww/preset-cloudflare-fullstack`；目标托管平台为 Cloudflare
+  Workers，配置的主机名为
+  `gate.silvermoon.work`。Cloudflare 账户归属、Zone 资格、部署访问权限和运维密钥保管仍待验证。目前尚未进行 DNS 更改或服务部署。

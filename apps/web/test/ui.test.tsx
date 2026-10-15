@@ -111,6 +111,8 @@ beforeEach(() => {
     .fn<typeof fetch>()
     .mockImplementation(async (input, options) => {
       const path = String(input);
+      if (path === "/api/bootstrap")
+        return response({ providers: [{ id: "github", label: "GitHub" }] });
       if (path === "/api/me")
         return currentMe
           ? response(currentMe)
@@ -292,6 +294,34 @@ describe("session and lists", () => {
     await userEvent.click(screen.getByRole("button", { name: "重试登录检查" }));
     await screen.findByRole("heading", { name: "待我审批" });
   });
+  it("does not offer an unconfigured OAuth provider", async () => {
+    currentMe = null;
+    fetchMock.mockImplementation(async (input) =>
+      String(input) === "/api/me"
+        ? failure(401, "SESSION_REQUIRED")
+        : response({ providers: [] }),
+    );
+    mount("/login");
+    await screen.findByText("尚未配置 GitHub 登录，请联系试点运维负责人。");
+    expect(screen.queryByRole("link", { name: "使用 GitHub 登录" })).toBeNull();
+  });
+  it("fails closed on provider discovery errors and allows retry", async () => {
+    currentMe = null;
+    let failed = true;
+    fetchMock.mockImplementation(async (input) =>
+      String(input) === "/api/me"
+        ? failure(401, "SESSION_REQUIRED")
+        : failed
+          ? failure(503, "SERVICE_BUSY")
+          : response({ providers: [{ id: "github", label: "GitHub" }] }),
+    );
+    mount("/login");
+    await screen.findByRole("button", { name: "重试登录入口" });
+    expect(screen.queryByRole("link", { name: "使用 GitHub 登录" })).toBeNull();
+    failed = false;
+    await userEvent.click(screen.getByRole("button", { name: "重试登录入口" }));
+    await screen.findByRole("link", { name: "使用 GitHub 登录" });
+  });
   it("shows explicit empty inbox without granting permission", async () => {
     currentMe = { ...me, permissions: { canCreate: false, canDecide: false } };
     mount("/inbox");
@@ -378,7 +408,11 @@ describe("session and lists", () => {
   it("clears identity-scoped payload on session expiration", async () => {
     mount("/requests/request-1");
     await screen.findByRole("heading", { name: payload.candidate });
-    fetchMock.mockImplementation(async () => failure(401, "SESSION_REQUIRED"));
+    fetchMock.mockImplementation(async (input) =>
+      String(input) === "/api/bootstrap"
+        ? response({ providers: [{ id: "github", label: "GitHub" }] })
+        : failure(401, "SESSION_REQUIRED"),
+    );
     await userEvent.click(screen.getByRole("button", { name: "刷新详情" }));
     await screen.findByRole("link", { name: "使用 GitHub 登录" });
     expect(

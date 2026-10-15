@@ -1,6 +1,10 @@
 ---
 name: ui-change-review
-description: "Create concise before/after HTML review artifacts for proposed changes to an existing user interface. Use when a human needs to compare affected screens, workflows, states, layout, or interaction changes before implementation without requiring a complete prototype."
+description:
+  "Create concise before/after HTML review artifacts for proposed changes to an
+  existing user interface. Use when a human needs to compare affected screens,
+  workflows, states, layout, or interaction changes before implementation
+  without requiring a complete prototype."
 argument-hint: "[affected UI or review goal]"
 user-invocable: true
 ---
@@ -23,8 +27,8 @@ reviewer should understand the proposed UI change in about five minutes.
    contract. Label the visual comparison as illustrative and link to the
    normative source when one exists.
 
-If the current behavior cannot be established, label the uncertainty instead
-of presenting an assumption as Before.
+If the current behavior cannot be established, label the uncertainty instead of
+presenting an assumption as Before.
 
 ## Build The Comparison
 
@@ -43,23 +47,23 @@ ui-review/
 
 The entry page owns the decision, material deltas, scenario navigation,
 normative link, and approval question. It loads one scenario at a time in the
-template's iframe. Each scenario file owns only its title, concise callouts,
-and equivalent Before/After product surfaces; it must also remain usable when
-opened directly. Delete unused example markup and replace every `{{TOKEN}}`.
-Use the existing product's visual language inside scenario files; the artifact
-should explain the change, not introduce a new design system.
+template's iframe. Each scenario file owns only its title, concise callouts, and
+equivalent Before/After product surfaces; it must also remain usable when opened
+directly. Delete unused example markup and replace every `{{TOKEN}}`. Use the
+existing product's visual language inside scenario files; the artifact should
+explain the change, not introduce a new design system.
 
 - Put Before and After beside each other at wide widths and stack them in the
   same order on narrow screens.
-- Use the same scenario, representative data, viewport, shell, and scale on
-  both sides so the comparison is fair.
+- Use the same scenario, representative data, viewport, shell, and scale on both
+  sides so the comparison is fair.
 - Keep shared review chrome in `index.html`; do not duplicate it in scenarios.
-   Keep product-specific styles with the scenario that uses them. If multiple
-   scenarios share substantial product CSS, place it in a sibling stylesheet
-   rather than copying it into every HTML file.
+  Keep product-specific styles with the scenario that uses them. If multiple
+  scenarios share substantial product CSS, place it in a sibling stylesheet
+  rather than copying it into every HTML file.
 - Prefer one focused scenario file over hiding many states in one document.
-   Split only decision-relevant scenarios; do not fragment one coherent
-   comparison into separate Before and After files.
+  Split only decision-relevant scenarios; do not fragment one coherent
+  comparison into separate Before and After files.
 - Show only affected regions at enough fidelity to judge hierarchy, labels,
   controls, density, and state changes.
 - Put the requested decision and material deltas before the comparison. Let the

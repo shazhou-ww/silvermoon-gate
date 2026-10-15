@@ -7,6 +7,7 @@ allowBuilds:
   workerd: true
 
 catalog:
+  playwright: ^1.64.1
   esbuild: ^0.28.2
   miniflare: 5.20261012.0-beta
   "@hookform/resolvers": ^5.9.1
@@ -53,3 +54,5 @@ minimumReleaseAgeExclude:
   - "@cloudflare/workers-types@5.20261014.1"
   - miniflare@5.20261012.0-beta
   - wrangler@4.151.0
+  - playwright-core@1.64.1
+  - playwright@1.64.1

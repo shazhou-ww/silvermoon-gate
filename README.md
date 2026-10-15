@@ -179,6 +179,24 @@ offline-verifiable release credential.
 
 ## Commands
 
+### 本地浏览器闭环验证
+
+首次运行 `pnpm check` 前安装测试浏览器：
+
+```sh
+pnpm --filter @workspace/worker exec playwright install chromium
+```
+
+Linux CI 使用 `playwright install --with-deps chromium` 安装浏览器和系统依赖。
+`pnpm check` 会先构建生产静态资源，再运行
+`apps/worker/test/browser-runtime.test.ts`：Chromium 实际访问 Miniflare/workerd 的同源静态资源与 Worker
+API，使用两份生产迁移及项目目录下隔离的 D1 持久化，覆盖 1440px/320px 创建、批准、拒绝、撤回、无权第三身份、键盘取消、故障恢复、权限撤销、运行时重启与注销后旧 cookie 重放拒绝。测试结束释放浏览器/运行时并清理数据。
+
+测试仅在测试进程内模拟已验证的 GitHub account 输入，经生产 Auth.js
+callback 与加密 cookie 建立真实本地会话；不拦截浏览器 API，不增加生产认证绕过接口，不读取
+`.dev.vars`、真实凭据或访问云端。它不能代替真实 GitHub
+OAuth、云端 D1 与授权试点环境的外部验收。
+
 | Command       | Purpose                                                      |
 | ------------- | ------------------------------------------------------------ |
 | `pnpm dev`    | Build initial assets, then run Vite and Wrangler             |

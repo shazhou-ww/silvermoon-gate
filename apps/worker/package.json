@@ -22,6 +22,7 @@
     "hono": "catalog:"
   },
   "devDependencies": {
+    "playwright": "catalog:",
     "esbuild": "catalog:",
     "miniflare": "catalog:",
     "@cloudflare/workers-types": "catalog:",

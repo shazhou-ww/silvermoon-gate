@@ -27,6 +27,7 @@ import {
 import {
   api,
   ApiError,
+  bootstrapSchema,
   errorText,
   formSchema,
   listSchema,
@@ -221,6 +222,10 @@ function Gate() {
 
 function Login() {
   const location = useLocation();
+  const bootstrap = useQuery({
+    queryKey: ["bootstrap"],
+    queryFn: ({ signal }) => api("/api/bootstrap", bootstrapSchema, { signal }),
+  });
   const returnTo = safeReturn(
     new URLSearchParams(location.search).get("returnTo"),
   );
@@ -238,12 +243,29 @@ function Login() {
           使用 GitHub 身份登录。登录不代表获得创建或审批权限；权限由 Gate
           单独配置。
         </p>
-        <a
-          className="button"
-          href={`/api/auth/signin/github?callbackUrl=${encodeURIComponent(returnTo)}`}
-        >
-          使用 GitHub 登录
-        </a>
+        {bootstrap.isPending && <p role="status">正在检查登录入口…</p>}
+        {bootstrap.isError && (
+          <Alert>
+            {errorText(bootstrap.error)}
+            <Button onClick={() => void bootstrap.refetch()}>
+              重试登录入口
+            </Button>
+          </Alert>
+        )}
+        {bootstrap.data?.providers.some(
+          (provider) => provider.id === "github",
+        ) ? (
+          <a
+            className="button"
+            href={`/api/auth/signin/github?callbackUrl=${encodeURIComponent(returnTo)}`}
+          >
+            使用 GitHub 登录
+          </a>
+        ) : (
+          bootstrap.isSuccess && (
+            <Alert>尚未配置 GitHub 登录，请联系试点运维负责人。</Alert>
+          )
+        )}
         <p className="muted">
           请求内容创建后不可修改。审批人必须与请求方不同。
         </p>
