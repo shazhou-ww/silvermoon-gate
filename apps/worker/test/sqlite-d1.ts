@@ -18,6 +18,12 @@ export class SqliteD1Database implements D1Database {
           "utf8",
         ),
       );
+      this.database.exec(
+        readFileSync(
+          new URL("../migrations/0003_agent_mvp.sql", import.meta.url),
+          "utf8",
+        ),
+      );
     }
   }
 

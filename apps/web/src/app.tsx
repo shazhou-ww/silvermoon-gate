@@ -33,6 +33,7 @@ import {
   listSchema,
   meSchema,
   requestEnvelope,
+  requesterTypeLabel,
   safeReturn,
   templatesSchema,
 } from "./api.js";
@@ -377,8 +378,9 @@ function RequestList({ view }: { view: "mine" | "inbox" }) {
                       <Badge status={item.status} />
                     </div>
                     <p className="muted">
-                      请求方 {item.requesterIdentityId} · 模板 v
-                      {item.templateVersion} · {formatTime(item.createdAt)}
+                      请求方 {requesterTypeLabel[item.requesterType]} ·{" "}
+                      {item.requesterIdentityId} · 模板 v{item.templateVersion}{" "}
+                      · {formatTime(item.createdAt)}
                     </p>
                   </Card>
                 </li>
@@ -875,7 +877,10 @@ function Detail() {
           <dt>Gate 载荷摘要</dt>
           <dd className="digest">{request.payloadDigest}</dd>
           <dt>请求方稳定身份</dt>
-          <dd>{request.requesterIdentityId}</dd>
+          <dd>
+            {requesterTypeLabel[request.requesterType]} ·{" "}
+            {request.requesterIdentityId}
+          </dd>
           <dt>创建时间</dt>
           <dd>{formatTime(request.createdAt)}</dd>
           {request.threadId && (

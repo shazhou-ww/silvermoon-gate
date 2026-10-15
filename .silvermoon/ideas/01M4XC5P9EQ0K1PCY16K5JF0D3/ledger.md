@@ -4,15 +4,15 @@
 
 ### Implementation steps
 
-- [ ] **I-S01:** 实现独立 Agent 认证与直接权限
-- [ ] **I-S02:** 集成请求与调用方恢复
-- [ ] **I-S03:** 验证身份与故障边界
+- [x] **I-S01:** 实现独立 Agent 认证与直接权限
+- [x] **I-S02:** 集成请求与调用方恢复
+- [x] **I-S03:** 验证身份与故障边界
 
 ### Implementation acceptance criteria
 
-- [ ] **I-AC01:** Agent 不借用人类权限
-- [ ] **I-AC02:** 调用方不误放行
-- [ ] **I-AC03:** 人类与 Agent 链路可追溯
+- [x] **I-AC01:** Agent 不借用人类权限
+- [x] **I-AC02:** 调用方不误放行
+- [x] **I-AC03:** 人类与 Agent 链路可追溯
 
 ## Deployment
 

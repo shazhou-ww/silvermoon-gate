@@ -9,10 +9,15 @@ import { describe, expect, it } from "vitest";
 import { createAuthConfig } from "../src/auth.js";
 import type { Bindings } from "../src/env.js";
 import { applyMigrations } from "./runtime-migrations.js";
+import {
+  issueAgentCredential,
+  registerAgent,
+  setAgentAccess,
+} from "../src/agent-admin.js";
 
 describe("Chromium → production assets/Worker → persistent local D1", () => {
   for (const width of [1440, 320]) {
-    it(`completes isolated human workflows, recovery and restart at ${width}px`, async () => {
+    it(`completes isolated human/Agent workflows, recovery and restart at ${width}px`, async () => {
       const bundle = await build({
         entryPoints: [
           fileURLToPath(new URL("../src/index.ts", import.meta.url)),
@@ -51,6 +56,7 @@ describe("Chromium → production assets/Worker → persistent local D1", () => 
         bindings: {
           AUTH_SECRET: secret,
           APP_NAME: "Gate isolated browser test",
+          GATE_AGENT_ISSUER: "urn:silvermoon-gate:local",
         },
       });
       let mf = new Miniflare(options);
@@ -261,6 +267,90 @@ describe("Chromium → production assets/Worker → persistent local D1", () => 
           });
           if (action === "批准") approvedPath = path;
         }
+        const agentId = await registerAgent(db, "lin", "浏览器测试 Agent");
+        const credential = await issueAgentCredential(db, agentId);
+        for (const permission of ["create", "read", "withdraw"])
+          await setAgentAccess(db, agentId, permission, true);
+        const authentication = await fetch(`${origin}/api/agent/token`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(credential),
+        });
+        expect(authentication.status).toBe(200);
+        const { accessToken } = await authentication.json<{
+          accessToken: string;
+        }>();
+        let agentApprovedId = "";
+        for (const action of ["批准", "拒绝", "撤回"]) {
+          const response = await fetch(`${origin}/api/agent/requests`, {
+            method: "POST",
+            headers: {
+              authorization: `Bearer ${accessToken}`,
+              "content-type": "application/json",
+              "Idempotency-Key": `agent-browser-${width}-${encodeURIComponent(action)}`,
+            },
+            body: JSON.stringify({
+              templateId: "release-review",
+              templateVersion: 1,
+              payloadSchemaVersion: 1,
+              payload: {
+                action: "release",
+                environment: "test",
+                candidate: `Agent ${width}px ${action}`,
+                artifactDigest: `sha256:${"a".repeat(64)}`,
+                summary: "独立 Agent 载荷；人类直接审批，来源不授予权限",
+              },
+            }),
+          });
+          expect(response.status).toBe(201);
+          const { request } = await response.json<{
+            request: { id: string };
+          }>();
+          await kai.goto(`${origin}/inbox`);
+          await kai
+            .getByRole("link", {
+              name: `Agent ${width}px ${action}`,
+              exact: true,
+            })
+            .click();
+          await kai.getByText(`Agent · ${agentId}`, { exact: true }).waitFor();
+          await fits(kai);
+          expect(
+            await kai.getByRole("button", { name: "准备撤回" }).count(),
+          ).toBe(0);
+          await lin.goto(`${origin}/requests/${request.id}`);
+          await lin
+            .getByRole("heading", { name: "不可访问或不存在" })
+            .waitFor();
+          if (action === "撤回") {
+            const withdrawn = await fetch(
+              `${origin}/api/agent/requests/${request.id}/withdraw`,
+              {
+                method: "POST",
+                headers: {
+                  authorization: `Bearer ${accessToken}`,
+                  "content-type": "application/json",
+                },
+                body: "{}",
+              },
+            );
+            expect(withdrawn.status).toBe(200);
+            await kai.getByRole("button", { name: "刷新详情" }).click();
+          } else {
+            await kai.getByRole("button", { name: `准备${action}` }).click();
+            await kai
+              .getByRole("button", { name: `确认${action}`, exact: true })
+              .click();
+          }
+          await kai
+            .getByText(`实际操作身份：${action === "撤回" ? agentId : "kai"}`, {
+              exact: false,
+            })
+            .waitFor();
+          expect(await kai.locator(".history li").count()).toBe(2);
+          await fits(kai);
+          if (action === "批准") agentApprovedId = request.id;
+        }
         await lin.goto(`${origin}/requests/mine`);
         await lin
           .getByRole("link", { name: `浏览器 ${width}px 批准`, exact: true })
@@ -280,6 +370,21 @@ describe("Chromium → production assets/Worker → persistent local D1", () => 
         await mf.dispose();
         mf = new Miniflare(options);
         const restartedOrigin = (await mf.ready).origin;
+        const agentHistory = await fetch(
+          `${restartedOrigin}/api/agent/requests/${agentApprovedId}`,
+          {
+            headers: { authorization: `Bearer ${accessToken}` },
+          },
+        );
+        expect(agentHistory.status).toBe(200);
+        expect(await agentHistory.json()).toMatchObject({
+          request: {
+            requesterType: "agent",
+            requesterIdentityId: agentId,
+            decidedBy: "kai",
+            status: "approved",
+          },
+        });
         // Cookies are scoped to the host, not the ephemeral runtime port.
         await lin.goto(`${restartedOrigin}${approvedPath}`);
         await lin

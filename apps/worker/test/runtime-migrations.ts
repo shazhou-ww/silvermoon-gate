@@ -24,8 +24,11 @@ export function migrationStatements(sql: string): string[] {
   return statements;
 }
 
-export async function applyMigrations(db: D1Database) {
-  for (const migration of ["0001_gate.sql", "0002_human_mvp.sql"]) {
+export async function applyMigrations(
+  db: D1Database,
+  migrations = ["0001_gate.sql", "0002_human_mvp.sql", "0003_agent_mvp.sql"],
+) {
+  for (const migration of migrations) {
     const sql = readFileSync(
       new URL(`../migrations/${migration}`, import.meta.url),
       "utf8",

@@ -47,6 +47,7 @@ export interface GateRequestRecord {
   readonly id: string;
   readonly status: GateRequestStatus;
   readonly requesterIdentityId: string;
+  readonly requesterType: "human" | "agent" | "legacy";
   readonly templateId: string;
   readonly templateVersion: number;
   readonly payloadSchemaVersion: number;
@@ -83,14 +84,19 @@ const validSession = `EXISTS (SELECT 1 FROM gate_sessions s JOIN gate_identities
 const canDecide = `EXISTS (SELECT 1 FROM gate_template_access a
  WHERE a.identity_id=? AND a.template_id=r.template_id AND a.template_version=r.template_version AND a.permission='decide')`;
 const canRead = `(r.requester_identity_id=? OR ${canDecide})`;
-const selection = `r.*, COALESCE((SELECT json_group_array(json_object(
+export const requestSelection = `r.*,
+ CASE WHEN EXISTS(SELECT 1 FROM gate_identities WHERE id=r.requester_identity_id) THEN 'human'
+ WHEN EXISTS(SELECT 1 FROM gate_agent_identities WHERE id=r.requester_identity_id) THEN 'agent'
+ ELSE 'legacy' END AS requester_type,
+ COALESCE((SELECT json_group_array(json_object(
  'type',e.event_type,'actorIdentityId',e.actor_identity_id,'occurredAt',e.occurred_at))
- FROM (SELECT * FROM gate_request_events WHERE request_id=r.id ORDER BY sequence) e),'[]') AS events_json,
- ${canDecide} AS can_decide`;
-interface RequestRow {
+ FROM (SELECT * FROM gate_request_events WHERE request_id=r.id ORDER BY sequence) e),'[]') AS events_json`;
+const selection = `${requestSelection}, ${canDecide} AS can_decide`;
+export interface RequestRow {
   id: string;
   status: GateRequestStatus;
   requester_identity_id: string;
+  requester_type: GateRequestRecord["requesterType"];
   template_id: string;
   template_version: number;
   payload_schema_version: number;
@@ -104,11 +110,15 @@ interface RequestRow {
   can_decide: number;
   request_fingerprint: string;
 }
-function toRecord(row: RequestRow, actor: Principal): GateRequestRecord {
+export function requestRecord(
+  row: RequestRow,
+  allowedActions: readonly GateRequestAction[],
+): GateRequestRecord {
   return {
     id: row.id,
     status: row.status,
     requesterIdentityId: row.requester_identity_id,
+    requesterType: row.requester_type,
     templateId: row.template_id,
     templateVersion: row.template_version,
     payloadSchemaVersion: row.payload_schema_version,
@@ -119,15 +129,20 @@ function toRecord(row: RequestRow, actor: Principal): GateRequestRecord {
     decidedAt: row.decided_at,
     decidedBy: row.decided_by,
     events: JSON.parse(row.events_json) as GateRequestEvent[],
-    allowedActions:
-      row.status !== "pending"
-        ? []
-        : row.requester_identity_id === actor.identityId
-          ? ["withdraw"]
-          : row.can_decide
-            ? ["approve", "reject"]
-            : [],
+    allowedActions,
   };
+}
+function toRecord(row: RequestRow, actor: Principal): GateRequestRecord {
+  return requestRecord(
+    row,
+    row.status !== "pending"
+      ? []
+      : row.requester_identity_id === actor.identityId
+        ? ["withdraw"]
+        : row.can_decide
+          ? ["approve", "reject"]
+          : [],
+  );
 }
 export async function getIdentity(db: D1Database, actor: Principal) {
   const row = await db
@@ -197,8 +212,11 @@ export async function getRequest(
   return toRecord(row, actor);
 }
 export function validateCreate(
-  input: Omit<CreateGateRequest, "requesterIdentityId" | "idempotencyKey">,
-) {
+  input: Record<string, unknown>,
+): asserts input is Omit<
+  CreateGateRequest,
+  "requesterIdentityId" | "idempotencyKey"
+> {
   if (
     input.templateId !== "release-review" ||
     input.templateVersion !== 1 ||

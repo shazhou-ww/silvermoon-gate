@@ -40,10 +40,19 @@ export const bootstrapSchema = z.object({
   providers: z.array(z.object({ id: z.literal("github"), label: z.string() })),
 });
 const statusSchema = z.enum(["pending", "approved", "rejected", "withdrawn"]);
+export const requesterTypeSchema = z
+  .enum(["human", "agent", "legacy"])
+  .default("legacy");
+export const requesterTypeLabel = {
+  human: "人类",
+  agent: "Agent",
+  legacy: "历史来源未绑定",
+} as const;
 export const summarySchema = z.object({
   id: z.string().min(1),
   status: statusSchema,
   requesterIdentityId: z.string().min(1),
+  requesterType: requesterTypeSchema,
   templateId: z.literal("release-review"),
   templateVersion: z.literal(1),
   payloadSchemaVersion: z.literal(1),
@@ -54,6 +63,7 @@ export const requestSchema = z.object({
   id: z.string().min(1),
   status: statusSchema,
   requesterIdentityId: z.string().min(1),
+  requesterType: requesterTypeSchema,
   templateId: z.literal("release-review"),
   templateVersion: z.literal(1),
   payloadSchemaVersion: z.literal(1),

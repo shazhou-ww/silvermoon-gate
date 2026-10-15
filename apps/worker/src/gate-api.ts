@@ -1,9 +1,6 @@
 import { Hono } from "hono";
 import type { Context } from "hono";
-import type {
-  CreateGateRequest,
-  GateRequestStatus,
-} from "@workspace/contracts";
+import type { GateRequestStatus } from "@workspace/contracts";
 import type { Bindings } from "./env.js";
 import {
   createRequest,
@@ -14,6 +11,7 @@ import {
   listRequests,
   releaseSchema,
   transitionRequest,
+  validateCreate,
   type Principal,
   type ListFilter,
 } from "./gate-store.js";
@@ -113,6 +111,7 @@ export function createGateApi(resolveIdentity: IdentityResolver) {
         id: request.id,
         status: request.status,
         requesterIdentityId: request.requesterIdentityId,
+        requesterType: request.requesterType,
         templateId: request.templateId,
         templateVersion: request.templateVersion,
         payloadSchemaVersion: request.payloadSchemaVersion,
@@ -145,15 +144,8 @@ export function createGateApi(resolveIdentity: IdentityResolver) {
       "payload",
       "threadId",
     ]);
-    const result = await createRequest(
-      c.env.GATE_DB,
-      actor,
-      key,
-      body as unknown as Omit<
-        CreateGateRequest,
-        "requesterIdentityId" | "idempotencyKey"
-      >,
-    );
+    validateCreate(body);
+    const result = await createRequest(c.env.GATE_DB, actor, key, body);
     return c.json(
       { request: result.request, replayed: !result.created },
       result.created ? 201 : 200,
@@ -204,7 +196,7 @@ export function createGateApi(resolveIdentity: IdentityResolver) {
   api.onError(errorResponse);
   return api;
 }
-function requireObject(
+export function requireObject(
   value: unknown,
   keys: readonly string[],
 ): Record<string, unknown> {

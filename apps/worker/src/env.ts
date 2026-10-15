@@ -6,4 +6,5 @@ export interface Bindings {
   readonly AUTH_GITHUB_SECRET?: string;
   readonly AUTH_SECRET: string;
   readonly AUTH_URL?: string;
+  readonly GATE_AGENT_ISSUER?: string;
 }

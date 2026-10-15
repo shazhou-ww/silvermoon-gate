@@ -130,6 +130,27 @@ describe("MVP API", () => {
     ).toBe(400);
   });
   it("validates keys, decisions, CSRF, content type, JSON and streamed body size", async () => {
+    for (const body of [
+      { ...input, templateId: 42 },
+      { ...input, templateVersion: "1" },
+      { ...input, payloadSchemaVersion: true },
+      { ...input, payload: null },
+      { ...input, payload: [] },
+      { ...input, payload: { ...input.payload, summary: 42 } },
+      { ...input, payload: { ...input.payload, extra: true } },
+      { ...input, threadId: 42 },
+    ]) {
+      const invalid = await call("/requests", "POST", body, {
+        "Idempotency-Key": "invalid-types",
+      });
+      expect(invalid.status).toBe(400);
+      expect(await invalid.json()).toMatchObject({
+        error: { code: "INVALID_INPUT" },
+      });
+    }
+    expect(
+      await db.prepare("SELECT count(*) AS n FROM gate_requests").first("n"),
+    ).toBe(0);
     expect((await call("/requests", "POST", input)).status).toBe(400);
     expect(
       (await call("/requests/missing/decision", "POST", { decision: "maybe" }))

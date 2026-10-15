@@ -38,6 +38,7 @@ const request: GateRequest = {
   id: "request-1",
   status: "pending",
   requesterIdentityId: "lin",
+  requesterType: "human",
   templateId: "release-review",
   templateVersion: 1,
   payloadSchemaVersion: 1,
@@ -153,6 +154,7 @@ beforeEach(() => {
       }
       return response({ request: currentRequest });
     });
+
   vi.stubGlobal("fetch", fetchMock);
 });
 afterEach(() => {
@@ -160,6 +162,39 @@ afterEach(() => {
   client?.clear();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+});
+
+describe("Requester identity type compatibility", () => {
+  it.each([
+    ["human", "人类"],
+    ["agent", "Agent"],
+    ["legacy", "历史来源未绑定"],
+  ] as const)(
+    "renders server-provided %s without inferring type from an ID prefix",
+    async (kind, label) => {
+      currentRequest = {
+        ...request,
+        requesterType: kind,
+        requesterIdentityId: "opaque-stable-id",
+      };
+      mount("/requests/request-1");
+      expect(
+        await screen.findByText(`${label} · opaque-stable-id`),
+      ).toBeTruthy();
+    },
+  );
+  it("keeps old responses unbound rather than fabricating a human identity type", () => {
+    expect(
+      requestEnvelope.parse({
+        request: { ...request, requesterType: undefined },
+      }).request.requesterType,
+    ).toBe("legacy");
+    expect(() =>
+      requestEnvelope.parse({
+        request: { ...request, requesterType: "unrecognized" },
+      }),
+    ).toThrow();
+  });
 });
 
 describe("typed API and safe navigation", () => {

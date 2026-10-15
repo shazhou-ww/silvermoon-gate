@@ -1,0 +1,12 @@
+{
+  "templateId": "release-review",
+  "templateVersion": 1,
+  "payloadSchemaVersion": 1,
+  "payload": {
+    "action": "release",
+    "candidate": "isolated-local-example",
+    "artifactDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "environment": "test",
+    "summary": "Synthetic local approval only; Gate never executes the release."
+  }
+}

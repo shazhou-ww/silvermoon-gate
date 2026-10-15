@@ -9,6 +9,7 @@ import {
 import type { Bindings } from "./env.js";
 import { createGateApi, errorResponse } from "./gate-api.js";
 import { GateStoreError } from "./gate-store.js";
+import { createAgentApi } from "./agent-api.js";
 
 const app = new Hono<{ Bindings: Bindings }>();
 app.use("*", secureHeaders());
@@ -21,6 +22,7 @@ app.use(
   initAuthConfig((c) => createAuthConfig(c.env as Bindings)),
 );
 app.use("/api/auth/*", authHandler());
+app.route("/api/agent", createAgentApi());
 app.get("/api/health", (c) =>
   c.json({ service: c.env.APP_NAME, status: "ok" }),
 );

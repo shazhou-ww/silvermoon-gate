@@ -4,5 +4,8 @@ AUTH_URL=http://localhost:5173/api/auth
 AUTH_GITHUB_ID=
 AUTH_GITHUB_SECRET=
 
+# Local Agent issuer only. A real pilot needs a distinct issuer and separate D1.
+GATE_AGENT_ISSUER=urn:silvermoon-gate:local
+
 # Gate identities and direct permissions are provisioned only by reviewed SQL.
 # See migrations/0002_human_mvp.sql; no administrator/browser bypass exists.
