@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>请求方来源识别对照</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 16px;
+        color: #20352e;
+        background: white;
+        font:
+          14px/1.6 system-ui,
+          sans-serif;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 20px;
+      }
+      h2 {
+        margin: 0 0 16px;
+        font-size: 18px;
+      }
+      p {
+        margin: 8px 0;
+        color: #576a61;
+      }
+      .comparison {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+      section {
+        min-width: 0;
+        border: 1px solid #ccd7ce;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      header {
+        padding: 10px 16px;
+        background: #f4f5f1;
+        border-bottom: 1px solid #ccd7ce;
+      }
+      .surface {
+        padding: 20px;
+      }
+      dl {
+        display: grid;
+        grid-template-columns: minmax(80px, 0.6fr) minmax(0, 1fr);
+        gap: 8px 16px;
+        margin: 0;
+      }
+      dt {
+        color: #576a61;
+      }
+      dd {
+        margin: 0;
+        overflow-wrap: anywhere;
+      }
+      .result {
+        border-top: 1px solid #ccd7ce;
+        margin-top: 20px;
+        padding-top: 16px;
+      }
+      .badge {
+        display: inline-block;
+        border-radius: 999px;
+        background: #e8f3e9;
+        color: #224b39;
+        padding: 2px 8px;
+      }
+      @media (max-width: 760px) {
+        body {
+          padding: 12px;
+        }
+        .comparison {
+          grid-template-columns: 1fr;
+        }
+        .surface {
+          padding: 16px;
+        }
+        dl {
+          grid-template-columns: 1fr;
+          gap: 4px;
+        }
+        dd {
+          margin-bottom: 8px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>同一已知人类请求 · 详情受影响区域</h1>
+    <p>
+      依据当前 app.tsx
+      的固定业务内容、稳定身份及实际操作身份区域；省略两侧相同的载荷字段、摘要和页面外壳。对照仅为设计示意。
+    </p>
+    <main class="comparison">
+      <section aria-labelledby="before">
+        <header id="before"><strong>Before · 当前</strong></header>
+        <div class="surface">
+          <h2>固定业务内容</h2>
+          <dl>
+            <dt>模板 / Schema</dt>
+            <dd>release-review v1 / v1</dd>
+            <dt>请求方稳定身份</dt>
+            <dd>lin</dd>
+            <dt>创建时间</dt>
+            <dd>2026-10-15 18:00</dd>
+          </dl>
+          <div class="result">
+            <h2>在线审批结果</h2>
+            <p>
+              <span class="badge">已批准</span> ·
+              在线结果，无离线凭证；批准不表示实际发布已发生。
+            </p>
+            <p>实际操作身份：kai · 2026-10-15 18:01</p>
+          </div>
+        </div>
+      </section>
+      <section aria-labelledby="after">
+        <header id="after"><strong>After · 增加服务端来源类型</strong></header>
+        <div class="surface">
+          <h2>固定业务内容</h2>
+          <dl>
+            <dt>模板 / Schema</dt>
+            <dd>release-review v1 / v1</dd>
+            <dt>请求方稳定身份</dt>
+            <dd><span class="badge">人类</span> lin</dd>
+            <dt>创建时间</dt>
+            <dd>2026-10-15 18:00</dd>
+          </dl>
+          <div class="result">
+            <h2>在线审批结果</h2>
+            <p>
+              <span class="badge">已批准</span> ·
+              在线结果，无离线凭证；批准不表示实际发布已发生。
+            </p>
+            <p>实际操作身份：kai · 2026-10-15 18:01</p>
+          </div>
+        </div>
+      </section>
+    </main>
+    <script>
+      function reportHeight() {
+        window.parent.postMessage(
+          {
+            type: "ui-review:height",
+            height: document.documentElement.scrollHeight,
+          },
+          "*",
+        );
+      }
+      new ResizeObserver(reportHeight).observe(document.documentElement);
+      window.addEventListener("load", reportHeight);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MVP 2 来源识别审阅</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 20px;
+        color: #20352e;
+        background: #f4f5f1;
+        font:
+          14px/1.6 system-ui,
+          sans-serif;
+      }
+      main {
+        max-width: 1380px;
+        margin: auto;
+      }
+      h1 {
+        font-size: 24px;
+        margin: 0 0 8px;
+      }
+      p {
+        margin: 8px 0;
+      }
+      a {
+        color: #224b39;
+        overflow-wrap: anywhere;
+      }
+      a:focus-visible {
+        outline: 3px solid #337855;
+        outline-offset: 4px;
+      }
+      iframe {
+        display: block;
+        box-sizing: content-box;
+        width: calc(100% - 2px);
+        border: 1px solid #ccd7ce;
+        border-radius: 12px;
+        margin-top: 16px;
+        background: white;
+        height: 650px;
+      }
+      @media (max-width: 720px) {
+        body {
+          padding: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>MVP 2：在原请求详情识别来源</h1>
+      <p>
+        待审决定：来源类型与稳定 ID
+        并列呈现，审批操作者继续单独显示，不改原审批流程。
+      </p>
+      <p>
+        示意辅助物，不是生产 UI 或行为契约。规范：<a href="../Design.md"
+          >Design.md</a
+        >。
+      </p>
+      <p>
+        仅新增来源文字；Agent
+        显示“Agent”，未绑定旧来源显示“历史来源未绑定”，不能猜测为人类。以下用同一已知人类请求公平对照当前界面。
+      </p>
+      <a href="scenarios/01-requester.html" target="comparison"
+        >查看来源识别对照</a
+      >
+      <iframe
+        name="comparison"
+        title="请求方来源 Before 与 After"
+        src="scenarios/01-requester.html"
+      ></iframe>
+      <p>是否批准来源类型增量及与实际审批 actor 分离的展示？</p>
+    </main>
+    <script>
+      const frame = document.querySelector("iframe");
+      window.addEventListener("message", (event) => {
+        if (
+          event.source === frame.contentWindow &&
+          event.data?.type === "ui-review:height" &&
+          Number.isFinite(event.data.height) &&
+          event.data.height > 0
+        ) {
+          frame.style.height = `${Math.ceil(event.data.height)}px`;
+        }
+      });
+    </script>
+  </body>
+</html>

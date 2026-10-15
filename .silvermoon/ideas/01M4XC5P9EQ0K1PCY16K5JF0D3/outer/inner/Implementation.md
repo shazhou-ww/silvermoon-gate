@@ -1,5 +1,13 @@
 # Implementation
 
+## Design context
+
+依据 [详细设计](ideal/Design.md) 实施短期 opaque
+token、独立机器路由、显式本人 create/read/withdraw 权限及失败不放行调用方。由阶段子 agent 实施，当前 session 依据用户委托负责审阅和 gate 决策；不把本地实现接受等同于真实试点通过。
+
+MVP
+1 外部试点未完成时，仅允许本地并行开发与验证；本阶段真实环境部署及 Deployment 验收仍受前置门禁约束。
+
 ## Steps
 
 ### I-S01: 实现独立 Agent 认证与直接权限
