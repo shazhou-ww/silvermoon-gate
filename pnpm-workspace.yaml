@@ -10,7 +10,7 @@ catalog:
   playwright: ^1.64.1
   esbuild: ^0.28.2
   miniflare: 5.20261012.0-beta
-  "@hookform/resolvers": ^5.9.1
+  "@hookform/resolvers": ^5.9.2
   "@tanstack/react-query": ^5.104.2
   "@testing-library/react": ^16.3.3
   "@testing-library/user-event": ^14.6.8
